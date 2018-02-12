@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="com.google.cloud.android.speech.ManualCommandsActivity">
+
+    <TableLayout
+        android:layout_width="0dp"
+        android:layout_height="295dp"
+        android:layout_marginBottom="8dp"
+        android:layout_marginTop="8dp"
+        android:stretchColumns="1"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <TableRow
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <TextView
+                android:layout_column="1"
+                android:padding="15dp"
+                android:text="Lights" />
+
+            <Switch
+                android:id="@+id/lightsSwitch"
+                android:gravity="end"
+                android:padding="15dp" />
+        </TableRow>
+
+
+        <TableRow
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <TextView
+                android:layout_column="1"
+                android:padding="15dp"
+                android:text="AC" />
+
+            <Switch
+                android:id="@+id/acSwitch"
+                android:gravity="end"
+                android:padding="15dp" />
+        </TableRow>
+
+        <TableRow
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <TextView
+                android:layout_column="1"
+                android:padding="15dp"
+                android:text="AC Temperature" />
+
+
+            <SeekBar
+                android:id="@+id/acTemperature"
+                android:layout_width="150dp"
+                android:layout_height="match_parent"
+                android:gravity="end"
+                android:padding="15dp" />
+        </TableRow>
+
+        <TableRow
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <TextView
+                android:layout_column="1"
+                android:padding="15dp"
+                android:text="Set the Alarm" />
+
+            <TextView
+                android:id="@+id/time"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerHorizontal="true"
+                android:ems="10"
+                android:hint="Tap here to set the alarm"
+                android:inputType="time"
+                android:textAlignment="center" />
+
+        </TableRow>
+    </TableLayout>
+
+    <Button
+        android:id="@+id/nextButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="8dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginStart="8dp"
+        android:text="Next"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <TextView
+        android:id="@+id/textView"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="16dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="24dp"
+        android:text="Please check whether the following parts work properly on your device."
+        android:textAlignment="viewStart"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        android:gravity="start" />
+
+
+</android.support.constraint.ConstraintLayout>

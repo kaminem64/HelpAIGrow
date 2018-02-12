@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Amanda</string>
+    <string name="permission_message">This app needs to record audio and recognize your speech.</string>
+</resources>
