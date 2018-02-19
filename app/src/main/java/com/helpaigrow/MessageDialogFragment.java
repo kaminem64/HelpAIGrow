@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.speech;
+package com.helpaigrow;
 
 import android.app.Dialog;
 import android.content.DialogInterface;

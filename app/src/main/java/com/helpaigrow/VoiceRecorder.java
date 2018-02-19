@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.speech;
+package com.helpaigrow;
 
 import android.media.AudioFormat;
 import android.media.AudioRecord;

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    package="com.speech">
+    package="com.helpaigrow">
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
@@ -15,7 +15,7 @@
         android:theme="@style/AppTheme"
         tools:ignore="GoogleAppIndexingWarning">
         <activity
-            android:name=".WelcomeActivity"
+            android:name="com.helpaigrow.WelcomeActivity"
             android:screenOrientation="portrait">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -24,29 +24,29 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".AuthActivity"
+            android:name="com.helpaigrow.AuthActivity"
             android:autoLink="web"
             android:screenOrientation="portrait" />
         <activity
-            android:name=".ConsentFormActivity"
+            android:name="com.helpaigrow.ConsentFormActivity"
             android:screenOrientation="portrait" />
         <activity
-            android:name=".QuestionsActivity"
+            android:name="com.helpaigrow.QuestionsActivity"
             android:screenOrientation="portrait" />
         <activity
-            android:name=".ExpOneActivity"
+            android:name="com.helpaigrow.ExpOneActivity"
             android:screenOrientation="portrait" />
         <activity
-            android:name=".ExpTwoGroupOneActivity"
+            android:name="com.helpaigrow.ExpTwoGroupOneActivity"
             android:screenOrientation="portrait" />
         <activity
-            android:name=".ExpTwoGroupTwoActivity"
+            android:name="com.helpaigrow.ExpTwoGroupTwoActivity"
             android:screenOrientation="portrait" />
 
-        <service android:name=".SpeechService" />
-        <service android:name=".ResponseService" />
+        <service android:name="com.helpaigrow.SpeechService" />
+        <service android:name="com.helpaigrow.ResponseService" />
 
-        <activity android:name=".ReportProblemActivity"
+        <activity android:name="com.helpaigrow.ReportProblemActivity"
             android:autoLink="web"
             android:screenOrientation="portrait" />
     </application>
