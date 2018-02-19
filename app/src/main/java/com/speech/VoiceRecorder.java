@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.google.cloud.android.speech;
+package com.speech;
 
 import android.media.AudioFormat;
 import android.media.AudioRecord;
@@ -131,7 +131,7 @@ public class VoiceRecorder {
         }
     }
 
-    void unsyncedStop() {
+    void unSynchedStop() {
             if (mThread != null) {
                 mThread.interrupt();
                 mThread = null;

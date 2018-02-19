@@ -1,7 +1,8 @@
-package com.google.cloud.android.speech;
+package com.speech;
 
 import android.annotation.SuppressLint;
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.media.AudioManager;
@@ -42,6 +43,7 @@ public class ResponseService extends Service {
     MediaPlayer mediaPlayer;
 
     private String responseServerAddress;
+    private AsyncTask<Void, Void, Void> speakingAgent;
 
     // Settings
     public static final String USERSETTINGS = "PrefsFile";
@@ -53,6 +55,7 @@ public class ResponseService extends Service {
     Timer timer;
     TimerTask timerTask;
     private ArrayList<String> receivedMessage;
+    private AudioManager audioManager;
 
     /**
      * Providing a communication channel for clients
@@ -65,8 +68,12 @@ public class ResponseService extends Service {
 
         // Restore preferences
         final SharedPreferences settings = getSharedPreferences(USERSETTINGS, 0);
-        conversationToken = settings.getString("conversationToken", null);
+        conversationToken = settings.getString("conversationToken", "");
         voicePersona = settings.getString("voicePersona", "Joanna");
+
+        audioManager = (AudioManager)getSystemService(Context.AUDIO_SERVICE);
+        assert audioManager != null;
+        audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, (audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)*3)/4 , 0);
 
         initPollyClient();
         setupNewMediaPlayer();
@@ -97,6 +104,12 @@ public class ResponseService extends Service {
 
     void setupNewMediaPlayer() {
         mediaPlayer = new MediaPlayer();
+
+
+        // Request audio focus for playback
+        audioManager.requestAudioFocus(null, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
+
+        mediaPlayer.setVolume(1,1);
         mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
             @Override
             public void onCompletion(MediaPlayer mp) {
@@ -154,9 +167,22 @@ public class ResponseService extends Service {
      * @param isFinished The status
      */
     public void speak(String text, boolean isFinished) {
-        new Speak(text, isFinished).execute();
+        speakingAgent = new Speak(text, isFinished);
+        speakingAgent.execute();
         this.flushReceivedMessage();
 
+    }
+
+    public void stopSpeaking() {
+        if (speakingAgent != null) {
+            speakingAgent.cancel(true);
+            speakingAgent = null;
+        }
+        if(mediaPlayer != null) {
+            mediaPlayer.stop();
+            mediaPlayer.release();
+            mediaPlayer = null;
+        }
     }
 
     private String prepareQuery() {
@@ -272,7 +298,6 @@ public class ResponseService extends Service {
                             mp.release();
                             Intent goToQuestions = new Intent(activity, QuestionsActivity.class);
                             startActivity(goToQuestions);
-                            activity.finish();
                         }
                     });
                 }
@@ -294,13 +319,14 @@ public class ResponseService extends Service {
     }
 
     @SuppressLint("StaticFieldLeak")
-    public class FetchResponse extends AsyncTask<String, Integer, String> {
+    private class FetchResponse extends AsyncTask<String, Integer, String> {
 
         @Override
         protected String doInBackground(String... strings) {
             StringBuilder result = new StringBuilder();
             try {
                 String urlParameters = strings[0];
+                Log.d("urlParameters", urlParameters);
                 URL url = new URL(responseServerAddress);
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();
                 conn.setReadTimeout(10000);
@@ -347,8 +373,10 @@ public class ResponseService extends Service {
                     Log.d("ServerStat", "Got response parameter");
                     String nextCommandHintText = response.getString("next_command_hint_text");
                     Log.d("ServerStat", "Got next_command_hint_text");
+                    boolean hasTriedAllCommands = response.getBoolean("has_tried_all_commands");
+                    Log.d("ServerStat", "Got has_tried_all_commands");
 
-                    activity.runCommand(responseCode, responseParameter, nextCommandHintText);
+                    activity.runCommand(responseCode, responseParameter, nextCommandHintText, hasTriedAllCommands);
                 }
                 if(!responseText.equals("")) speak(responseText, isFinished);
             } catch (JSONException e) {

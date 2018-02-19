@@ -1,4 +1,4 @@
-package com.google.cloud.android.speech;
+package com.speech;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
@@ -6,7 +6,9 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.support.annotation.NonNull;
@@ -16,17 +18,30 @@ import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
+import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ProgressBar;
 import android.widget.SeekBar;
 import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.BufferedReader;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.ArrayList;
 //import android.view.animation.AlphaAnimation;
 //import android.view.animation.Animation;
 
-public class ExpTwoSpeechActivity extends SpeechActivity implements MessageDialogFragment.Listener {
+public class ExpTwoGroupOneActivity extends SpeechActivity implements MessageDialogFragment.Listener {
 
     Toast toastMessage;
     Switch lightsSwitch;
@@ -34,6 +49,9 @@ public class ExpTwoSpeechActivity extends SpeechActivity implements MessageDialo
     SeekBar acTemperature;
     TextView time;
     TextView hintText;
+
+    // Settings
+    public static final String USERSETTINGS = "PrefsFile";
 
     private boolean isIceBroken = false;
     private boolean isSpeechServiceRunning = false;
@@ -63,6 +81,7 @@ public class ExpTwoSpeechActivity extends SpeechActivity implements MessageDialo
     TextView recognizedText;
     private ProgressBar spinner;
     private TextView loadingWhiteTransparent;
+    private Button nextButton;
 
 
     /**
@@ -75,7 +94,7 @@ public class ExpTwoSpeechActivity extends SpeechActivity implements MessageDialo
 
         @Override
         public void onVoiceStart() {
-            Log.i("SpeechActivity", "onVoiceStart()");
+//            Log.i("SpeechActivity", "onVoiceStart()");
             showStatus(true);
             if (mSpeechService != null) {
                 mSpeechService.startRecognizing(mVoiceRecorder.getSampleRate());
@@ -84,7 +103,7 @@ public class ExpTwoSpeechActivity extends SpeechActivity implements MessageDialo
 
         @Override
         public void onVoice(byte[] data, int size) {
-            Log.i("SpeechActivity", "onVoice()");
+//            Log.i("SpeechActivity", "onVoice()");
             if (mSpeechService != null) {
                 mSpeechService.recognize(data, size);
             }
@@ -92,7 +111,7 @@ public class ExpTwoSpeechActivity extends SpeechActivity implements MessageDialo
 
         @Override
         public void onVoiceEnd() {
-            Log.i("SpeechActivity", "onVoiceStart()");
+//            Log.i("SpeechActivity", "onVoiceStart()");
             showStatus(false);
             if (mSpeechService != null) {
                 mSpeechService.finishRecognizing();
@@ -110,7 +129,7 @@ public class ExpTwoSpeechActivity extends SpeechActivity implements MessageDialo
 
     void startVoiceRecorder() {
         if (mVoiceRecorder != null) {
-            mVoiceRecorder.unsyncedStop();
+            mVoiceRecorder.unSynchedStop();
             mVoiceRecorder = null;
         }
         mVoiceRecorder = new VoiceRecorder(mVoiceCallback);
@@ -119,7 +138,7 @@ public class ExpTwoSpeechActivity extends SpeechActivity implements MessageDialo
 
     void stopVoiceRecorder() {
         if (mVoiceRecorder != null) {
-            mVoiceRecorder.unsyncedStop(); // we added this new method to remove "synchronized (mLock)"
+            mVoiceRecorder.unSynchedStop(); // we added this new method to remove "synchronized (mLock)"
             mVoiceRecorder = null;
         }
     }
@@ -193,7 +212,7 @@ public class ExpTwoSpeechActivity extends SpeechActivity implements MessageDialo
             Log.d("ResponseService", "Connected");
             ResponseService.ResponseBinder responseBinder = (ResponseService.ResponseBinder) binder;
             mResponseService = responseBinder.getService();
-            mResponseService.setActivity(ExpTwoSpeechActivity.this);
+            mResponseService.setActivity(ExpTwoGroupOneActivity.this);
             mResponseService.setResponseServerAddress("http://amandabot.xyz/assistant_response/");
             mResponseService.setResponseDelay(1000);
             responseServiceLoaded = true;
@@ -218,28 +237,31 @@ public class ExpTwoSpeechActivity extends SpeechActivity implements MessageDialo
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_exp_two_speech);
+        setContentView(R.layout.activity_exp_two_group_one);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
-        microphoneIcon = findViewById(R.id.microphoneButtonE2G2);
+        final SharedPreferences settings = getSharedPreferences(USERSETTINGS, 0);
+        final String conversationToken = settings.getString("conversationToken", "");
+
+        microphoneIcon = findViewById(R.id.microphoneButtonE2G1);
         microphoneIcon.setVisibility(View.INVISIBLE);
 
-        spinner = findViewById(R.id.progressBarE2G2);
+        spinner = findViewById(R.id.progressBarE2G1);
         spinner.setVisibility(View.GONE);
-        loadingWhiteTransparent = findViewById(R.id.loadingWhiteTransparentE2G2);
+        loadingWhiteTransparent = findViewById(R.id.loadingWhiteTransparentE2G1);
         loadingWhiteTransparent.setVisibility(View.GONE);
 
-        recognizedText = findViewById(R.id.recognizedTextE2G2);
+        recognizedText = findViewById(R.id.recognizedTextE2G1);
 
         recognizedTextBuffer = new ArrayList<>();
 
-        lightsSwitch = findViewById(R.id.lightsSwitchE2G2);
+        lightsSwitch = findViewById(R.id.lightsSwitchE2G1);
         lightsSwitch.setClickable(false);
 
-        acSwitch = findViewById(R.id.acSwitchE2G2);
+        acSwitch = findViewById(R.id.acSwitchE2G1);
         acSwitch.setClickable(false);
 
-        acTemperature = findViewById(R.id.acTemperatureE2G2);
+        acTemperature = findViewById(R.id.acTemperatureE2G1);
 
         acTemperature.setOnTouchListener(new View.OnTouchListener() {
             @Override
@@ -248,44 +270,56 @@ public class ExpTwoSpeechActivity extends SpeechActivity implements MessageDialo
             }
         });
 
-        time = findViewById(R.id.timeE2G2);
+        time = findViewById(R.id.timeE2G1);
 
-        hintText = findViewById(R.id.hintE2G2);
+        hintText = findViewById(R.id.hintE2G1);
+
+        nextButton = findViewById(R.id.nextButtonE2G1);
+        nextButton.setVisibility(View.INVISIBLE);
+        nextButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                @SuppressLint("DefaultLocale") String query = String.format("conversation_token=%s&message=", conversationToken);
+                Log.d("conversationToken", query);
+                new FetchResponse().execute(query);
+            }
+        });
 
 
     }
 
-    public void runCommand(int commandCode, String responseParameter, String nextCommandHintText){
+    public void runCommand(int commandCode, String responseParameter, String nextCommandHintText, boolean hasTriedAllCommands){
         showStatus(false);
         hintText.setText(nextCommandHintText);
+        if(hasTriedAllCommands){nextButton.setVisibility(View.VISIBLE);}
         switch (commandCode) {
             // do nothing if something is already on/off or set | or just do anything we are asked
             case 100:
                 // Turn on the lights;
                 lightsSwitch.setChecked(true);
                 if (toastMessage!= null) toastMessage.cancel();
-                toastMessage = Toast.makeText(ExpTwoSpeechActivity.this, "Lights are on", Toast.LENGTH_SHORT);
+                toastMessage = Toast.makeText(ExpTwoGroupOneActivity.this, "Lights are on", Toast.LENGTH_SHORT);
                 toastMessage.show();
                 break;
             case 101:
                 // Turn off the lights
                 lightsSwitch.setChecked(false);
                 if (toastMessage!= null) toastMessage.cancel();
-                toastMessage = Toast.makeText(ExpTwoSpeechActivity.this, "Lights are off", Toast.LENGTH_SHORT);
+                toastMessage = Toast.makeText(ExpTwoGroupOneActivity.this, "Lights are off", Toast.LENGTH_SHORT);
                 toastMessage.show();
                 break;
             case 200:
                 // Turn on AC;
                 acSwitch.setChecked(true);
                 if (toastMessage!= null) toastMessage.cancel();
-                toastMessage = Toast.makeText(ExpTwoSpeechActivity.this, "AC is on", Toast.LENGTH_SHORT);
+                toastMessage = Toast.makeText(ExpTwoGroupOneActivity.this, "AC is on", Toast.LENGTH_SHORT);
                 toastMessage.show();
                 break;
             case 201:
                 // Turn off AC;
                 acSwitch.setChecked(false);
                 if (toastMessage!= null) toastMessage.cancel();
-                toastMessage = Toast.makeText(ExpTwoSpeechActivity.this, "AC is off", Toast.LENGTH_SHORT);
+                toastMessage = Toast.makeText(ExpTwoGroupOneActivity.this, "AC is off", Toast.LENGTH_SHORT);
                 toastMessage.show();
                 break;
             case 300:
@@ -293,7 +327,7 @@ public class ExpTwoSpeechActivity extends SpeechActivity implements MessageDialo
                 acTemperature.setProgress(Integer.parseInt(responseParameter));
                 if (toastMessage!= null) toastMessage.cancel();
                 String message = "Temperature is set to: " + responseParameter + "°F";
-                toastMessage = Toast.makeText(ExpTwoSpeechActivity.this, message, Toast.LENGTH_SHORT);
+                toastMessage = Toast.makeText(ExpTwoGroupOneActivity.this, message, Toast.LENGTH_SHORT);
                 toastMessage.show();
                 break;
             case 400:
@@ -301,7 +335,7 @@ public class ExpTwoSpeechActivity extends SpeechActivity implements MessageDialo
                 time.setText(responseParameter);
                 if (toastMessage!= null) toastMessage.cancel();
                 String alarmMessage = "Alarm is set for: " + responseParameter;
-                toastMessage = Toast.makeText(ExpTwoSpeechActivity.this, alarmMessage, Toast.LENGTH_SHORT);
+                toastMessage = Toast.makeText(ExpTwoGroupOneActivity.this, alarmMessage, Toast.LENGTH_SHORT);
                 toastMessage.show();
                 break;
             default:
@@ -312,9 +346,8 @@ public class ExpTwoSpeechActivity extends SpeechActivity implements MessageDialo
     @Override
     public void onBackPressed() {
         onStop();
-        Intent goBackIntent = new Intent(ExpTwoSpeechActivity.this, WelcomeActivity.class);
+        Intent goBackIntent = new Intent(ExpTwoGroupOneActivity.this, WelcomeActivity.class);
         startActivity(goBackIntent);
-        finish();
     }
 
     public void onPageSetupCompleted() {
@@ -398,6 +431,7 @@ public class ExpTwoSpeechActivity extends SpeechActivity implements MessageDialo
 
         // Stop the connection to ResponseService
         try {
+            mResponseService.stopSpeaking();
             unbindService(mResponseServiceConnection);
         } catch (Exception e) {
             Log.d("onStop", "mResponseServiceConnection is already unbindService");
@@ -536,4 +570,68 @@ public class ExpTwoSpeechActivity extends SpeechActivity implements MessageDialo
 //    }
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+    @SuppressLint("StaticFieldLeak")
+    private class FetchResponse extends AsyncTask<String, Integer, String> {
+
+        @Override
+        protected String doInBackground(String... strings) {
+            StringBuilder result = new StringBuilder();
+            try {
+                String urlParameters = strings[0];
+                Log.d("urlParameters", urlParameters);
+                URL url = new URL("http://amandabot.xyz/conversation_finished/");
+                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                conn.setReadTimeout(10000);
+                conn.setConnectTimeout(15000);
+                conn.setRequestMethod("POST");
+                conn.setDoInput(true);
+                conn.setDoOutput(true);
+                OutputStream os = conn.getOutputStream();
+                DataOutputStream writer = new DataOutputStream(os);
+                writer.writeBytes(urlParameters);
+                writer.flush();
+                writer.close();
+                os.close();
+                int status = conn.getResponseCode();
+                Log.d("Location", "HTTP STATUS: " + String.valueOf(status));
+                InputStream inputStream = conn.getInputStream();
+                BufferedReader in = new BufferedReader(new InputStreamReader(inputStream, "UTF-8"));
+                for (int c; (c = in.read()) >= 0;)
+                    result.append((char)c);
+            } catch (IOException e) {
+                Log.d("Location", "IOException");
+                e.printStackTrace();
+            }
+
+            return result.toString();
+        }
+
+        @Override
+        protected void onPostExecute(String result) {
+            super.onPostExecute(result);
+            try {
+                JSONObject resultJSON = new JSONObject(result);
+                Log.d("ServerStat", "Created the JSON Obj");
+                JSONObject response = resultJSON.getJSONObject("response");
+                Log.d("ServerStat", "Got response");
+                boolean success = response.getBoolean("success");
+                Log.d("ServerStat", "Got success");
+                if (success) {
+                    Intent goToQuestions = new Intent(ExpTwoGroupOneActivity.this, QuestionsActivity.class);
+                    startActivity(goToQuestions);
+                } else {
+                    Toast.makeText(ExpTwoGroupOneActivity.this, "Server error!\nPlease try again later!", Toast.LENGTH_LONG).show();
+                }
+            } catch (JSONException e) {
+                e.printStackTrace();
+                Log.d("ServerStat", e.toString());
+                Toast.makeText(ExpTwoGroupOneActivity.this, "Server error!\nPlease try again later!!!", Toast.LENGTH_LONG).show();
+            }
+
+        }
+    }
+
+
 }

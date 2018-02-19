@@ -1,4 +1,4 @@
-package com.google.cloud.android.speech;
+package com.speech;
 
 import android.Manifest;
 import android.content.Intent;
@@ -47,10 +47,10 @@ public class ConsentFormActivity extends AppCompatActivity implements MessageDia
         SharedPreferences settings = getSharedPreferences(USERSETTINGS, 0);
         String consentFormUrl = settings.getString("consentFormUrl", "http://amandabot.xyz/consent_form/");
 
-        acceptButton = (Button) findViewById(R.id.acceptButton);
-        declineButton = (Button) findViewById(R.id.declineButton);
+        acceptButton = findViewById(R.id.acceptButton);
+        declineButton = findViewById(R.id.declineButton);
 
-        webView = (WebView) findViewById(R.id.consentWebView);
+        webView = findViewById(R.id.consentWebView);
         webView.loadUrl(consentFormUrl);
 //        String summary = "<html><body>You scored <b>192</b> points.</body></html>";
 //        webView.loadDataWithBaseURL(null, summary, "text/html", "utf-8", null);
@@ -72,7 +72,6 @@ public class ConsentFormActivity extends AppCompatActivity implements MessageDia
                 Toast.makeText(ConsentFormActivity.this, "You can start the experiment later if you changed your mind.", Toast.LENGTH_LONG).show();
                 Intent goBackIntent = new Intent(ConsentFormActivity.this, WelcomeActivity.class);
                 startActivity(goBackIntent);
-                finish();
             }
         });
 
@@ -81,7 +80,6 @@ public class ConsentFormActivity extends AppCompatActivity implements MessageDia
     public void onBackPressed() {
         Intent goBackIntent = new Intent(ConsentFormActivity.this, WelcomeActivity.class);
         startActivity(goBackIntent);
-        finish();
     }
 
     @Override

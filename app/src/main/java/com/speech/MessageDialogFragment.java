@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.google.cloud.android.speech;
+package com.speech;
 
 import android.app.Dialog;
 import android.content.DialogInterface;

@@ -1,4 +1,4 @@
-package com.google.cloud.android.speech;
+package com.speech;
 
 import android.annotation.SuppressLint;
 import android.app.Service;
@@ -9,10 +9,12 @@ import android.os.AsyncTask;
 import android.os.Binder;
 import android.os.Handler;
 import android.os.IBinder;
+import android.os.Looper;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.text.TextUtils;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.google.auth.Credentials;
 import com.google.auth.oauth2.AccessToken;
@@ -108,6 +110,7 @@ public class SpeechService extends Service {
         @Override
         public void onNext(StreamingRecognizeResponse response) {
             String text = null;
+
             boolean isFinal = false;
             if (response.getResultsCount() > 0) {
                 final StreamingRecognitionResult result = response.getResults(0);
@@ -131,6 +134,16 @@ public class SpeechService extends Service {
         @Override
         public void onError(Throwable t) {
             Log.e(TAG, "Error calling the API.", t);
+            // Here we close the experiment if any unhandled error occurs.
+            Handler handler = new Handler(Looper.getMainLooper());
+            handler.post(new Runnable() {
+                @Override
+                public void run() {
+                    Toast.makeText(getApplicationContext(), "Cannot reach the main server. Please switch to WiFi and reopen the app.", Toast.LENGTH_LONG).show();
+                    startActivity(new Intent(getApplicationContext(), WelcomeActivity.class));
+                }
+            });
+
         }
 
         @Override

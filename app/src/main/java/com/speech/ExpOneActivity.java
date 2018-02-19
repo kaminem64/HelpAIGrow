@@ -1,4 +1,4 @@
-package com.google.cloud.android.speech;
+package com.speech;
 
 import android.Manifest;
 import android.content.ComponentName;
@@ -21,7 +21,9 @@ import java.util.ArrayList;
 //import android.view.animation.AlphaAnimation;
 //import android.view.animation.Animation;
 
-public class ExpOneSpeechActivity extends SpeechActivity implements MessageDialogFragment.Listener {
+public class ExpOneActivity extends SpeechActivity implements MessageDialogFragment.Listener {
+
+    private boolean firstTimeShown = true;
 
     private boolean isIceBroken = false;
     private boolean isSpeechServiceRunning = false;
@@ -88,7 +90,7 @@ public class ExpOneSpeechActivity extends SpeechActivity implements MessageDialo
 
     void startVoiceRecorder() {
         if (mVoiceRecorder != null) {
-            mVoiceRecorder.stop();
+            mVoiceRecorder.unSynchedStop();
         }
         mVoiceRecorder = new VoiceRecorder(mVoiceCallback);
         mVoiceRecorder.start();
@@ -96,7 +98,7 @@ public class ExpOneSpeechActivity extends SpeechActivity implements MessageDialo
 
     void stopVoiceRecorder() {
         if (mVoiceRecorder != null) {
-            mVoiceRecorder.unsyncedStop(); // we added this new method to remove "synchronized (mLock)"
+            mVoiceRecorder.unSynchedStop(); // we added this new method to remove "synchronized (mLock)"
             mVoiceRecorder = null;
         }
     }
@@ -174,7 +176,7 @@ public class ExpOneSpeechActivity extends SpeechActivity implements MessageDialo
             Log.d("ResponseService", "Connected");
             ResponseService.ResponseBinder responseBinder = (ResponseService.ResponseBinder) binder;
             mResponseService = responseBinder.getService();
-            mResponseService.setActivity(ExpOneSpeechActivity.this);
+            mResponseService.setActivity(ExpOneActivity.this);
             mResponseService.setResponseServerAddress("http://amandabot.xyz/response/");
             mResponseService.setResponseDelay(3000);
             responseServiceLoaded = true;
@@ -199,7 +201,7 @@ public class ExpOneSpeechActivity extends SpeechActivity implements MessageDialo
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_exp_one_speech);
+        setContentView(R.layout.activity_exp_one);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
         microphoneIcon = findViewById(R.id.microphoneButtonExp1);
@@ -217,16 +219,15 @@ public class ExpOneSpeechActivity extends SpeechActivity implements MessageDialo
     }
 
     @Override
-    public void runCommand(int commandCode, String responseParameter, String nextCommandHintText){
+    public void runCommand(int commandCode, String responseParameter, String nextCommandHintText, boolean hasTriedAllCommands){
 
     }
 
     @Override
     public void onBackPressed() {
         onStop();
-        Intent goBackIntent = new Intent(ExpOneSpeechActivity.this, WelcomeActivity.class);
+        Intent goBackIntent = new Intent(ExpOneActivity.this, WelcomeActivity.class);
         startActivity(goBackIntent);
-        finish();
     }
 
     public void onPageSetupCompleted() {
@@ -254,6 +255,13 @@ public class ExpOneSpeechActivity extends SpeechActivity implements MessageDialo
         System.gc();
         super.onStart();
 
+        if(!firstTimeShown) {
+            Intent goToWelcome = new Intent(ExpOneActivity.this, WelcomeActivity.class);
+            startActivity(goToWelcome);
+        } else {
+            firstTimeShown = false;
+        }
+
         showStatus(false);
         // Establish a connection to ResponseService
         Intent intent = new Intent(this, ResponseService.class);
@@ -264,9 +272,10 @@ public class ExpOneSpeechActivity extends SpeechActivity implements MessageDialo
         bindService(new Intent(this, SpeechService.class), mSpeechServiceConnection, BIND_AUTO_CREATE);
 
         // Start listening to voices
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
-            startVoiceRecorder();
-        } else if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.RECORD_AUDIO)) {
+//        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
+//            startVoiceRecorder();
+//        } else
+        if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.RECORD_AUDIO)) {
             showPermissionMessageDialog();
         } else {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.RECORD_AUDIO}, REQUEST_RECORD_AUDIO_PERMISSION);
@@ -311,6 +320,7 @@ public class ExpOneSpeechActivity extends SpeechActivity implements MessageDialo
 
         // Stop the connection to ResponseService
         try {
+            mResponseService.stopSpeaking();
             unbindService(mResponseServiceConnection);
         } catch (Exception e) {
             Log.d("onStop", "mResponseServiceConnection is already unbindService");
@@ -336,9 +346,7 @@ public class ExpOneSpeechActivity extends SpeechActivity implements MessageDialo
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         if (requestCode == REQUEST_RECORD_AUDIO_PERMISSION) {
-            if (permissions.length == 1 && grantResults.length == 1 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                startVoiceRecorder();
-            } else {
+            if (!(permissions.length == 1 && grantResults.length == 1 && grantResults[0] == PackageManager.PERMISSION_GRANTED)) {
                 showPermissionMessageDialog();
             }
         } else {

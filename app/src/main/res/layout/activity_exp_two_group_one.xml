@@ -4,17 +4,17 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="com.google.cloud.android.speech.ExpTwoSpeechActivity">
+    tools:context="com.speech.ExpTwoGroupOneActivity">
 
     <ImageButton
-        android:id="@+id/microphoneButtonE2G2"
-        android:layout_width="109dp"
-        android:layout_height="128dp"
+        android:id="@+id/microphoneButtonE2G1"
+        android:layout_width="55dp"
+        android:layout_height="64dp"
         android:layout_centerHorizontal="true"
         android:layout_centerVertical="true"
-        android:layout_marginTop="32dp"
+        android:layout_marginTop="16dp"
         android:background="@android:color/transparent"
-        android:contentDescription="Mic"
+        android:contentDescription="@string/mic"
         android:scaleType="fitXY"
         android:src="@drawable/ic_mic_none_black_48dp"
         app:layout_constraintLeft_toLeftOf="parent"
@@ -22,18 +22,18 @@
         app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
-        android:id="@+id/recognizedTextE2G2"
+        android:id="@+id/recognizedTextE2G1"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginEnd="8dp"
         android:layout_marginStart="8dp"
-        android:layout_marginTop="16dp"
+        android:layout_marginTop="8dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/microphoneButtonE2G2" />
+        app:layout_constraintTop_toBottomOf="@+id/microphoneButtonE2G1" />
 
     <TextView
-        android:id="@+id/hintE2G2"
+        android:id="@+id/hintE2G1"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginBottom="16dp"
@@ -42,20 +42,22 @@
         android:textAlignment="center"
         android:textSize="18sp"
         android:textStyle="bold"
-        app:layout_constraintBottom_toTopOf="@+id/tableLayoutE2G2"
+        app:layout_constraintBottom_toTopOf="@+id/tableLayoutE2G1"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
 
 
     <TableLayout
-        android:id="@+id/tableLayoutE2G2"
+        android:id="@+id/tableLayoutE2G1"
         android:layout_width="match_parent"
-        android:layout_height="224dp"
+        android:layout_height="wrap_content"
         android:layout_marginBottom="8dp"
+        android:layout_marginTop="8dp"
         android:stretchColumns="1"
-        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent">
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent">
+
 
         <TableRow
             android:layout_width="match_parent"
@@ -64,10 +66,10 @@
             <TextView
                 android:layout_column="1"
                 android:padding="15dp"
-                android:text="Lights" />
+                android:text="@string/lights" />
 
             <Switch
-                android:id="@+id/lightsSwitchE2G2"
+                android:id="@+id/lightsSwitchE2G1"
                 android:gravity="end"
                 android:padding="15dp" />
         </TableRow>
@@ -80,13 +82,14 @@
             <TextView
                 android:layout_column="1"
                 android:padding="15dp"
-                android:text="AC" />
+                android:text="@string/ac" />
 
             <Switch
-                android:id="@+id/acSwitchE2G2"
+                android:id="@+id/acSwitchE2G1"
                 android:gravity="end"
                 android:padding="15dp" />
         </TableRow>
+
 
         <TableRow
             android:layout_width="match_parent"
@@ -95,16 +98,14 @@
             <TextView
                 android:layout_column="1"
                 android:padding="15dp"
-                android:text="AC Temperature" />
-
+                android:text="@string/acTemperature" />
 
             <SeekBar
-                android:id="@+id/acTemperatureE2G2"
-                android:layout_width="150dp"
-                android:layout_height="match_parent"
-                android:gravity="end"
+                android:id="@+id/acTemperatureE2G1"
                 android:padding="15dp" />
+
         </TableRow>
+
 
         <TableRow
             android:layout_width="match_parent"
@@ -113,29 +114,41 @@
             <TextView
                 android:layout_column="1"
                 android:padding="15dp"
-                android:text="Set the Alarm" />
+                android:text="@string/setTheAlarm" />
 
             <TextView
-                android:id="@+id/timeE2G2"
+                android:id="@+id/timeE2G1"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_centerHorizontal="true"
                 android:ems="10"
-                android:hint="Set the alarm"
+                android:hint="@string/setTheAlarm"
                 android:inputType="time"
-                android:textAlignment="center" />
-
+                android:textAlignment="center"
+                tools:ignore="TextViewEdits" />
         </TableRow>
     </TableLayout>
+
+    <Button
+        android:id="@+id/nextButtonE2G1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="8dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginStart="8dp"
+        android:text="@string/proceed"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
     <TextView
-        android:id="@+id/loadingWhiteTransparentE2G2"
+        android:id="@+id/loadingWhiteTransparentE2G1"
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
         android:background="#ddffffff"
         />
 
     <ProgressBar
-        android:id="@+id/progressBarE2G2"
+        android:id="@+id/progressBarE2G1"
         style="@android:style/Widget.DeviceDefault.Light.ProgressBar"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -147,6 +160,5 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
-
 
 </android.support.constraint.ConstraintLayout>

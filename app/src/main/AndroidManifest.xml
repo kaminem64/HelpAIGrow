@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    package="com.google.cloud.android.speech">
+    package="com.speech">
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
@@ -9,7 +9,7 @@
     <application
         android:allowBackup="true"
         android:fullBackupContent="@xml/backup_scheme"
-        android:icon="@mipmap/ic_launcher"
+        android:icon="@mipmap/icon"
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/AppTheme"
@@ -24,26 +24,31 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".ConsentFormActivity"
-            android:screenOrientation="portrait" />
-        <activity
             android:name=".AuthActivity"
             android:autoLink="web"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name=".ConsentFormActivity"
             android:screenOrientation="portrait" />
         <activity
             android:name=".QuestionsActivity"
             android:screenOrientation="portrait" />
         <activity
-            android:name=".ManualCommandsActivity"
+            android:name=".ExpOneActivity"
             android:screenOrientation="portrait" />
         <activity
-            android:name=".ExpOneSpeechActivity"
+            android:name=".ExpTwoGroupOneActivity"
             android:screenOrientation="portrait" />
         <activity
-            android:name=".ExpTwoSpeechActivity"
+            android:name=".ExpTwoGroupTwoActivity"
             android:screenOrientation="portrait" />
+
         <service android:name=".SpeechService" />
         <service android:name=".ResponseService" />
+
+        <activity android:name=".ReportProblemActivity"
+            android:autoLink="web"
+            android:screenOrientation="portrait" />
     </application>
 
 </manifest>

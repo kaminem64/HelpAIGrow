@@ -4,14 +4,14 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="com.google.cloud.android.speech.ConsentFormActivity">
+    tools:context="com.speech.ConsentFormActivity">
 
     <Button
         android:id="@+id/acceptButton"
         android:layout_width="88dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="32dp"
-        android:text="Accept"
+        android:text="@string/accept"
         app:layout_constraintBaseline_toBaselineOf="@+id/declineButton"
         app:layout_constraintStart_toStartOf="parent"
         android:layout_marginLeft="32dp" />
@@ -22,7 +22,7 @@
         android:layout_height="wrap_content"
         android:layout_marginBottom="8dp"
         android:layout_marginEnd="32dp"
-        android:text="Decline"
+        android:text="@string/decline"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         android:layout_marginRight="32dp" />

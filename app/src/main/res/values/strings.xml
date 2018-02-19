@@ -1,5 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Amanda</string>
+    <string name="app_name">HelpAIGrow</string>
     <string name="permission_message">This app needs to record audio and recognize your speech.</string>
+    <string name="authSuccess">Authentication successful.</string>
+    <string name="authFail">Authentication failed!</string>
+    <string name="proceed">Proceed</string>
+    <string name="mic">Mic</string>
+    <string name="lights">Lights</string>
+    <string name="ac">AC</string>
+    <string name="acTemperature">AC Temperature</string>
+    <string name="setTheAlarm">Set the Alarm</string>
+    <string name="authStatus">Authentication Status</string>
+    <string name="accept">Accept</string>
+    <string name="decline">Decline</string>
+    <string name="tapToSetAlarm">Tap here to set the alarm</string>
+    <string name="ExpTwoInstruction">Please check whether the following parts work properly on your device.</string>
+    <string name="welcomeMessage">Welcome to\nHelpAIGrow™</string>
+    <string name="startExp">Start the Experiment</string>
+    <string name="expID">Experiment ID</string>
+    <string name="expIDMessage">Please enter the experiment ID below:</string>
+    <string name="logoText">AI</string>
+    <string name="oneClickProblemReport">One-Click Problem Report</string>
 </resources>

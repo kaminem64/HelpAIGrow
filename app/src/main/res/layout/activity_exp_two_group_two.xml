@@ -4,18 +4,44 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="com.google.cloud.android.speech.ManualCommandsActivity">
+    tools:context="com.speech.ExpTwoGroupTwoActivity">
+
+    <Button
+        android:id="@+id/nextButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="8dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginStart="8dp"
+        android:text="@string/proceed"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <TextView
+        android:id="@+id/textView"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="16dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="24dp"
+        android:text="@string/ExpTwoInstruction"
+        android:textAlignment="viewStart"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        android:gravity="start" />
 
     <TableLayout
-        android:layout_width="0dp"
-        android:layout_height="295dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
         android:layout_marginBottom="8dp"
         android:layout_marginTop="8dp"
         android:stretchColumns="1"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
+        app:layout_constraintTop_toTopOf="@id/textView">
 
         <TableRow
             android:layout_width="match_parent"
@@ -24,7 +50,7 @@
             <TextView
                 android:layout_column="1"
                 android:padding="15dp"
-                android:text="Lights" />
+                android:text="@string/lights" />
 
             <Switch
                 android:id="@+id/lightsSwitch"
@@ -40,7 +66,7 @@
             <TextView
                 android:layout_column="1"
                 android:padding="15dp"
-                android:text="AC" />
+                android:text="@string/ac" />
 
             <Switch
                 android:id="@+id/acSwitch"
@@ -55,15 +81,12 @@
             <TextView
                 android:layout_column="1"
                 android:padding="15dp"
-                android:text="AC Temperature" />
-
+                android:text="@string/acTemperature" />
 
             <SeekBar
                 android:id="@+id/acTemperature"
-                android:layout_width="150dp"
-                android:layout_height="match_parent"
-                android:gravity="end"
                 android:padding="15dp" />
+
         </TableRow>
 
         <TableRow
@@ -73,46 +96,18 @@
             <TextView
                 android:layout_column="1"
                 android:padding="15dp"
-                android:text="Set the Alarm" />
+                android:text="@string/setTheAlarm" />
 
             <TextView
-                android:id="@+id/time"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_centerHorizontal="true"
-                android:ems="10"
-                android:hint="Tap here to set the alarm"
-                android:inputType="time"
-                android:textAlignment="center" />
-
+                    android:id="@+id/time"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:ems="10"
+                    android:hint="@string/tapToSetAlarm"
+                    android:inputType="time"
+                    android:textAlignment="center"
+                    tools:ignore="TextViewEdits" />
         </TableRow>
     </TableLayout>
-
-    <Button
-        android:id="@+id/nextButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="8dp"
-        android:layout_marginEnd="8dp"
-        android:layout_marginStart="8dp"
-        android:text="Next"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
-
-    <TextView
-        android:id="@+id/textView"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginEnd="16dp"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="24dp"
-        android:text="Please check whether the following parts work properly on your device."
-        android:textAlignment="viewStart"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        android:gravity="start" />
-
 
 </android.support.constraint.ConstraintLayout>
