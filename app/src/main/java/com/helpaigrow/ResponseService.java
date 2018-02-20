@@ -296,8 +296,7 @@ public class ResponseService extends Service {
                         @Override
                         public void onCompletion(MediaPlayer mp) {
                             mp.release();
-                            Intent goToQuestions = new Intent(activity, QuestionsActivity.class);
-                            startActivity(goToQuestions);
+                            activity.goToQuestions();
                         }
                     });
                 }
@@ -307,7 +306,6 @@ public class ResponseService extends Service {
                 } catch (IOException e) {
                     Log.e("Polly", "Unable to set data source for the media player! " + e.getMessage());
                 }
-
                 // Start the playback asynchronously (since the data source is a network stream).
                 mediaPlayer.prepareAsync();
             } catch (Exception e) {
@@ -350,7 +348,6 @@ public class ResponseService extends Service {
                 Log.d("Location", "IOException");
                 e.printStackTrace();
             }
-
             return result.toString();
         }
 
@@ -375,7 +372,6 @@ public class ResponseService extends Service {
                     Log.d("ServerStat", "Got next_command_hint_text");
                     boolean hasTriedAllCommands = response.getBoolean("has_tried_all_commands");
                     Log.d("ServerStat", "Got has_tried_all_commands");
-
                     activity.runCommand(responseCode, responseParameter, nextCommandHintText, hasTriedAllCommands);
                 }
                 if(!responseText.equals("")) speak(responseText, isFinished);
@@ -384,9 +380,6 @@ public class ResponseService extends Service {
                 Log.d("ServerStat", e.toString());
                 speak("Please check your Internet connection.", false);
             }
-
         }
     }
-
-
 }

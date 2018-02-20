@@ -284,8 +284,11 @@ public class ExpTwoGroupOneActivity extends SpeechActivity implements MessageDia
                 new FetchResponse().execute(query);
             }
         });
+    }
 
-
+    @Override
+    public void goToQuestions(){
+        startActivity(new Intent(ExpTwoGroupOneActivity.this, QuestionsActivity.class));
     }
 
     public void runCommand(int commandCode, String responseParameter, String nextCommandHintText, boolean hasTriedAllCommands){
@@ -398,9 +401,6 @@ public class ExpTwoGroupOneActivity extends SpeechActivity implements MessageDia
         try {
             // Stop listening to voice
             stopVoiceRecorder();
-//            // Stop Cloud Speech API
-//            mSpeechService.removeListener(mSpeechServiceListener);
-//            unbindService(mSpeechServiceConnection);
         }
         catch (Exception e) {
             Log.d("pauseRecognition", "SpeechService is already stopped.");
@@ -411,9 +411,6 @@ public class ExpTwoGroupOneActivity extends SpeechActivity implements MessageDia
     }
     protected void resumeRecognition(){
         try {
-//            // Prepare Cloud Speech API
-//            bindService(new Intent(this, SpeechService.class), mSpeechServiceConnection, BIND_AUTO_CREATE);
-
             // Start listening to voices
             startVoiceRecorder();
         } catch (Exception e) {
@@ -619,8 +616,7 @@ public class ExpTwoGroupOneActivity extends SpeechActivity implements MessageDia
                 boolean success = response.getBoolean("success");
                 Log.d("ServerStat", "Got success");
                 if (success) {
-                    Intent goToQuestions = new Intent(ExpTwoGroupOneActivity.this, QuestionsActivity.class);
-                    startActivity(goToQuestions);
+                    goToQuestions();
                 } else {
                     Toast.makeText(ExpTwoGroupOneActivity.this, "Server error!\nPlease try again later!", Toast.LENGTH_LONG).show();
                 }

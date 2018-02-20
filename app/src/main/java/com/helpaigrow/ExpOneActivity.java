@@ -222,6 +222,11 @@ public class ExpOneActivity extends SpeechActivity implements MessageDialogFragm
     public void runCommand(int commandCode, String responseParameter, String nextCommandHintText, boolean hasTriedAllCommands){
 
     }
+    @Override
+    public void goToQuestions(){
+        startActivity(new Intent(ExpOneActivity.this, QuestionsActivity.class));
+    }
+
 
     @Override
     public void onBackPressed() {
@@ -271,10 +276,6 @@ public class ExpOneActivity extends SpeechActivity implements MessageDialogFragm
         // Prepare Cloud Speech API
         bindService(new Intent(this, SpeechService.class), mSpeechServiceConnection, BIND_AUTO_CREATE);
 
-        // Start listening to voices
-//        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
-//            startVoiceRecorder();
-//        } else
         if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.RECORD_AUDIO)) {
             showPermissionMessageDialog();
         } else {
@@ -287,9 +288,6 @@ public class ExpOneActivity extends SpeechActivity implements MessageDialogFragm
         try {
             // Stop listening to voice
             stopVoiceRecorder();
-//            // Stop Cloud Speech API
-//            mSpeechService.removeListener(mSpeechServiceListener);
-//            unbindService(mSpeechServiceConnection);
         }
         catch (Exception e) {
             Log.d("pauseRecognition", "SpeechService is already stopped.");
@@ -300,9 +298,6 @@ public class ExpOneActivity extends SpeechActivity implements MessageDialogFragm
     }
     protected void resumeRecognition(){
         try {
-//            // Prepare Cloud Speech API
-//            bindService(new Intent(this, SpeechService.class), mSpeechServiceConnection, BIND_AUTO_CREATE);
-
             // Start listening to voices
             startVoiceRecorder();
         } catch (Exception e) {
