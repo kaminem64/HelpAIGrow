@@ -140,7 +140,9 @@ public class SpeechService extends Service {
                 @Override
                 public void run() {
                     Toast.makeText(getApplicationContext(), "Cannot reach the main server. Please switch to WiFi and reopen the app.", Toast.LENGTH_LONG).show();
-                    startActivity(new Intent(getApplicationContext(), WelcomeActivity.class));
+                    Intent goBackIntent = new Intent(getApplicationContext(), WelcomeActivity.class);
+                    goBackIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+                    startActivity(goBackIntent);
                 }
             });
 

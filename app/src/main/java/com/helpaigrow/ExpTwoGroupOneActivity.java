@@ -350,6 +350,7 @@ public class ExpTwoGroupOneActivity extends SpeechActivity implements MessageDia
     public void onBackPressed() {
         onStop();
         Intent goBackIntent = new Intent(ExpTwoGroupOneActivity.this, WelcomeActivity.class);
+        goBackIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
         startActivity(goBackIntent);
     }
 

@@ -50,6 +50,7 @@ public class QuestionsActivity extends AppCompatActivity {
             switch (which){
                 case DialogInterface.BUTTON_POSITIVE:
                     Intent goBackIntent = new Intent(QuestionsActivity.this, WelcomeActivity.class);
+                    goBackIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
                     startActivity(goBackIntent);
                     break;
 
@@ -67,6 +68,5 @@ public class QuestionsActivity extends AppCompatActivity {
                 .setPositiveButton("Yes", dialogClickListener)
                 .setNegativeButton("No", dialogClickListener).show();
     }
-
 
 }

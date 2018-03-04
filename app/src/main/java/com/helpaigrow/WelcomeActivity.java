@@ -5,12 +5,16 @@ import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.text.InputType;
+import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.inputmethod.EditorInfo;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 
 public class WelcomeActivity extends AppCompatActivity {
@@ -30,6 +34,8 @@ public class WelcomeActivity extends AppCompatActivity {
         setTitle("");
 
         experimentIdText = findViewById(R.id.experimentIdText);
+        experimentIdText.setInputType(InputType.TYPE_CLASS_NUMBER);
+
         startExperimentButton = findViewById(R.id.startExpButton);
 
         // Restore preferences
@@ -66,6 +72,18 @@ public class WelcomeActivity extends AppCompatActivity {
             }
         });
 
+        experimentIdText.setOnEditorActionListener(new TextView.OnEditorActionListener() {
+            @Override
+            public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
+                boolean handled = false;
+                if (actionId == EditorInfo.IME_ACTION_SEND) {
+                    startExperimentButton.performClick();
+                    handled = true;
+                }
+                return handled;
+            }
+        });
+
     }
 
     @Override
@@ -95,13 +113,13 @@ public class WelcomeActivity extends AppCompatActivity {
         return true;
     }
 
-    @Override
-    public void onBackPressed() {
-        Intent intent = new Intent(Intent.ACTION_MAIN);
-        intent.addCategory(Intent.CATEGORY_HOME);
-        intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-        startActivity(intent);
-        finish();
-        System.exit(0);
-    }
+//    @Override
+//    public void onBackPressed() {
+//        Intent intent = new Intent(Intent.ACTION_MAIN);
+//        intent.addCategory(Intent.CATEGORY_HOME);
+//        intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+//        startActivity(intent);
+//        finish();
+//        System.exit(0);
+//    }
 }

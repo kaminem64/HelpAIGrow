@@ -74,8 +74,7 @@ public class ConsentFormActivity extends AppCompatActivity implements MessageDia
             @Override
             public void onClick(View view) {
                 Toast.makeText(ConsentFormActivity.this, "You can start the experiment later if you changed your mind.", Toast.LENGTH_LONG).show();
-                Intent goBackIntent = new Intent(ConsentFormActivity.this, WelcomeActivity.class);
-                startActivity(goBackIntent);
+                onBackPressed();
             }
         });
 
@@ -83,6 +82,7 @@ public class ConsentFormActivity extends AppCompatActivity implements MessageDia
     @Override
     public void onBackPressed() {
         Intent goBackIntent = new Intent(ConsentFormActivity.this, WelcomeActivity.class);
+        goBackIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
         startActivity(goBackIntent);
     }
 
@@ -135,7 +135,7 @@ public class ConsentFormActivity extends AppCompatActivity implements MessageDia
                 })
                 .setNegativeButton("I don't want to participate in the study", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) {
-                        startActivity(new Intent(ConsentFormActivity.this, WelcomeActivity.class));
+                        onBackPressed();
                     }
                 })
                 .setIcon(android.R.drawable.checkbox_on_background)

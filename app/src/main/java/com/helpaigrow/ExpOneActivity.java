@@ -232,6 +232,7 @@ public class ExpOneActivity extends SpeechActivity implements MessageDialogFragm
     public void onBackPressed() {
         onStop();
         Intent goBackIntent = new Intent(ExpOneActivity.this, WelcomeActivity.class);
+        goBackIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
         startActivity(goBackIntent);
     }
 
@@ -261,8 +262,7 @@ public class ExpOneActivity extends SpeechActivity implements MessageDialogFragm
         super.onStart();
 
         if(!firstTimeShown) {
-            Intent goToWelcome = new Intent(ExpOneActivity.this, WelcomeActivity.class);
-            startActivity(goToWelcome);
+            onBackPressed();
         } else {
             firstTimeShown = false;
         }

@@ -185,6 +185,7 @@ public class ExpTwoGroupTwoActivity extends AppCompatActivity {
     @Override
     public void onBackPressed() {
         Intent goBackIntent = new Intent(ExpTwoGroupTwoActivity.this, WelcomeActivity.class);
+        goBackIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
         startActivity(goBackIntent);
     }
 
@@ -247,8 +248,4 @@ public class ExpTwoGroupTwoActivity extends AppCompatActivity {
 
         }
     }
-
-
-
-
 }
