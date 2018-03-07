@@ -135,16 +135,16 @@ public class SpeechService extends Service {
         public void onError(Throwable t) {
             Log.e(TAG, "Error calling the API.", t);
             // Here we close the experiment if any unhandled error occurs.
-            Handler handler = new Handler(Looper.getMainLooper());
-            handler.post(new Runnable() {
-                @Override
-                public void run() {
-                    Toast.makeText(getApplicationContext(), "Cannot reach the main server. Please switch to WiFi and reopen the app.", Toast.LENGTH_LONG).show();
-                    Intent goBackIntent = new Intent(getApplicationContext(), WelcomeActivity.class);
-                    goBackIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
-                    startActivity(goBackIntent);
-                }
-            });
+//            Handler handler = new Handler(Looper.getMainLooper());
+//            handler.post(new Runnable() {
+//                @Override
+//                public void run() {
+//                    Toast.makeText(getApplicationContext(), "Cannot reach the main server.", Toast.LENGTH_LONG).show();
+//                    Intent goBackIntent = new Intent(getApplicationContext(), WelcomeActivity.class);
+//                    goBackIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+//                    startActivity(goBackIntent);
+//                }
+//            });
 
         }
 

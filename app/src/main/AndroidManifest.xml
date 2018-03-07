@@ -15,7 +15,7 @@
         android:theme="@style/AppTheme"
         tools:ignore="GoogleAppIndexingWarning">
         <activity
-            android:name="com.helpaigrow.WelcomeActivity"
+            android:name=".WelcomeActivity"
             android:screenOrientation="portrait">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -23,81 +23,85 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
         <activity
-            android:name="com.helpaigrow.AuthActivity"
+            android:name=".AuthActivity"
             android:autoLink="web"
-            android:screenOrientation="portrait"
-            android:parentActivityName="com.helpaigrow.WelcomeActivity" >
-        <!-- The meta-data element is needed for versions lower than 4.1 -->
-        <meta-data
-            android:name="android.support.PARENT_ACTIVITY"
-            android:value="com.helpaigrow.WelcomeActivity" />
-        </activity>
+            android:parentActivityName=".WelcomeActivity"
+            android:screenOrientation="portrait">
 
-        <activity
-            android:name="com.helpaigrow.ConsentFormActivity"
-            android:screenOrientation="portrait"
-            android:parentActivityName="com.helpaigrow.AuthActivity" >
-        <!-- The meta-data element is needed for versions lower than 4.1 -->
-        <meta-data
-            android:name="android.support.PARENT_ACTIVITY"
-            android:value="com.helpaigrow.AuthActivity" />
-        </activity>
-
-        <activity
-            android:name="com.helpaigrow.ExpOneActivity"
-            android:screenOrientation="portrait"
-            android:parentActivityName="com.helpaigrow.WelcomeActivity" >
             <!-- The meta-data element is needed for versions lower than 4.1 -->
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.helpaigrow.WelcomeActivity" />
         </activity>
-
         <activity
-            android:name="com.helpaigrow.ExpTwoGroupOneActivity"
-            android:screenOrientation="portrait"
-            android:parentActivityName="com.helpaigrow.WelcomeActivity" >
+            android:name=".ConsentFormActivity"
+            android:parentActivityName=".AuthActivity"
+            android:screenOrientation="portrait">
+
+            <!-- The meta-data element is needed for versions lower than 4.1 -->
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.helpaigrow.AuthActivity" />
+        </activity>
+        <activity
+            android:name=".ExpOneActivity"
+            android:parentActivityName=".WelcomeActivity"
+            android:screenOrientation="portrait">
+
             <!-- The meta-data element is needed for versions lower than 4.1 -->
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.helpaigrow.WelcomeActivity" />
         </activity>
-
         <activity
-            android:name="com.helpaigrow.ExpTwoGroupTwoActivity"
-            android:screenOrientation="portrait"
-            android:parentActivityName="com.helpaigrow.WelcomeActivity" >
+            android:name=".ExpTwoGroupOneActivity"
+            android:parentActivityName=".WelcomeActivity"
+            android:screenOrientation="portrait">
+
             <!-- The meta-data element is needed for versions lower than 4.1 -->
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.helpaigrow.WelcomeActivity" />
         </activity>
-
         <activity
-            android:name="com.helpaigrow.QuestionsActivity"
-            android:screenOrientation="portrait"
-            android:parentActivityName="com.helpaigrow.WelcomeActivity" >
+            android:name=".ExpTwoGroupTwoActivity"
+            android:parentActivityName=".WelcomeActivity"
+            android:screenOrientation="portrait">
+
             <!-- The meta-data element is needed for versions lower than 4.1 -->
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.helpaigrow.WelcomeActivity" />
         </activity>
+        <activity
+            android:name=".QuestionsActivity"
+            android:parentActivityName=".WelcomeActivity"
+            android:screenOrientation="portrait">
 
-        <activity android:name="com.helpaigrow.ReportProblemActivity"
+            <!-- The meta-data element is needed for versions lower than 4.1 -->
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.helpaigrow.WelcomeActivity" />
+        </activity>
+        <activity
+            android:name=".ReportProblemActivity"
             android:autoLink="web"
-            android:screenOrientation="portrait"
-            android:parentActivityName="com.helpaigrow.WelcomeActivity" >
+            android:parentActivityName=".WelcomeActivity"
+            android:screenOrientation="portrait">
+
             <!-- The meta-data element is needed for versions lower than 4.1 -->
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.helpaigrow.WelcomeActivity" />
         </activity>
 
-        <service android:name="com.helpaigrow.SpeechService" />
-        <service android:name="com.helpaigrow.ResponseService" />
+        <service android:name=".SpeechService" />
+        <service android:name=".ResponseService" />
 
+        <activity android:name=".ExpThreeGroupTwo"
+            android:screenOrientation="portrait">
+        </activity>
     </application>
 
 </manifest>
