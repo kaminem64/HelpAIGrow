@@ -1,6 +1,7 @@
 package com.helpaigrow;
 
 import android.Manifest;
+import android.content.Intent;
 import android.graphics.Point;
 import android.os.Bundle;
 import android.support.v4.app.ActivityCompat;
@@ -12,6 +13,8 @@ import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+
+import java.util.ArrayList;
 import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -25,6 +28,16 @@ public class ExpThreeGroupTwo extends SpeechActivity {
     private Timer timer = new Timer();
     private TextView scoreText;
     private int score = 0;
+
+    // Containers
+    private ArrayList<String> recognizedTextBuffer;
+
+    // View references
+    protected TextView recognizedText;
+
+    private ResponseServer responseServer;
+
+    private Thread startGameThread;
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     /**
@@ -44,49 +57,88 @@ public class ExpThreeGroupTwo extends SpeechActivity {
         params.topMargin = 0;
         relLay.addView(circle, params);
         scoreText = findViewById(R.id.scoreText);
+        circle.setVisibility(View.INVISIBLE);
 
         circle.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View view, MotionEvent motionEvent) {
                 score++;
-                new Talk().start();
                 scoreText.setText(String.valueOf(score));
                 circle.setVisibility(View.INVISIBLE);
                 return circle.performClick();
             }
         });
 
+        recognizedText = findViewById(R.id.recognizedTextExp3);
+        recognizedTextBuffer = new ArrayList<>();
+
+    }
+    @Override
+    public void onBackPressed() {
+        onStop();
+        Intent goBackIntent = new Intent(ExpThreeGroupTwo.this, WelcomeActivity.class);
+        goBackIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+        startActivity(goBackIntent);
+    }
+
+
+    /**
+     * Saving the page state in order to restore it after switching the apps or changing the app orientation
+     */
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
     }
 
     @Override
     protected void onStart() {
         super.onStart();
         bindSpeechService();
-        bindResponseService();
+    }
+
+    @Override
+    protected void startSpeechDependentService() {
         if (ActivityCompat.shouldShowRequestPermissionRationale(getActivity(), Manifest.permission.RECORD_AUDIO)) {
             showPermissionMessageDialog();
         } else {
             ActivityCompat.requestPermissions(getActivity(), new String[]{Manifest.permission.RECORD_AUDIO}, REQUEST_RECORD_AUDIO_PERMISSION);
         }
-        timer = null;
-        timer = new Timer();
-        timer.schedule(new PeriodicTask(), 0);
-
-        new Talk().start();
+        responseServer = new ResponseServer(this);
+        responseServer.setResponseServerAddress(getResponseServerUrl());
+        responseServer.setResponseDelay(getResponseDelay());
+        startGameThread = new startTheGame();
+        startGameThread.start();
     }
 
-    class Talk extends Thread {
+    Runnable startGameRunnable = new Runnable() {
+        @Override
+        public void run() {
+            responseServer.setOnUtteranceStart(pauseRecognitionRunnable);
+            responseServer.setOnUtteranceFinished(new Runnable() {
+                @Override
+                public void run() {
+                    resumeRecognition();
+                    timer = null;
+                    timer = new Timer();
+                    timer.schedule(new PeriodicTask(), 0);
+                }
+            });
+            responseServer.breakTheIce();
+            isIceBroken = true;
+        }
+    };
+
+
+    class startTheGame extends Thread {
         public void run() {
             synchronized (mLock) {
-                while(true) {
-                    if (isSpeechServiceBound && isResponseServiceBound) {
-                        getActivity().mResponseService.speak("What's up?", false);
-                        break;
-                    }
-                }
+                responseServer.setOnUtteranceStart(pauseRecognitionRunnable);
+                responseServer.setOnUtteranceFinished(startGameRunnable);
+                responseServer.speak("Hi! In this game you need to collect points by tapping on the circles while answering questions that I ask. You shall not stop tapping on circles while answering the questions. Good luck!", false);
             }
         }
     }
+
 
     @Override
     protected void onStop() {
@@ -94,19 +146,18 @@ public class ExpThreeGroupTwo extends SpeechActivity {
             timer.cancel();
             timer = null;
         }
+        circle.setVisibility(View.INVISIBLE);
         // Stop listening to voice
+
         stopVoiceRecorder();
+        if(responseServer != null){
+            responseServer.stopSpeaking();
+            responseServer = null;
+        }
+
         // Unbind Services
-        unBindResponseService();
         unBindSpeechService();
         super.onStop();
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        unBindResponseService();
-        unBindSpeechService();
     }
 
         @Override
@@ -121,12 +172,20 @@ public class ExpThreeGroupTwo extends SpeechActivity {
 
     @Override
     protected void finalizedRecognizedText(String text) {
-
+        recognizedText.setText(text);
+        recognizedTextBuffer.add(text);
+        ResponseServer responseServer = new ResponseServer(this);
+        responseServer.setResponseServerAddress(getResponseServerUrl());
+        responseServer.setResponseDelay(getResponseDelay());
+        responseServer.setOnUtteranceStart(pauseRecognitionRunnable);
+        responseServer.setOnUtteranceFinished(resumeRecognitionRunnable);
+        responseServer.setReceivedMessage(recognizedTextBuffer);
+        responseServer.respond();
     }
 
     @Override
     protected void unFinalizedRecognizedText(String text) {
-
+        recognizedText.setText(text);
     }
 
     @Override
@@ -151,12 +210,12 @@ public class ExpThreeGroupTwo extends SpeechActivity {
 
     @Override
     protected String getResponseServerUrl() {
-        return null;
+        return "http://amandabot.xyz/game_response/";
     }
 
     @Override
     protected long getResponseDelay() {
-        return 0;
+        return 500;
     }
 
     //////////////////////////////////////////////
@@ -176,7 +235,7 @@ public class ExpThreeGroupTwo extends SpeechActivity {
                         int viewHeight = relLay.getMeasuredHeight();
                         int leftMargin = rnd.nextInt(width - 2 * circleRadius);
                         int topMargin = rnd.nextInt(viewHeight - 4 * circleRadius); // getStatusBarHeight() - getNavBarHeight()
-                        Log.d("M", leftMargin + " " + topMargin);
+//                        Log.d("M", leftMargin + " " + topMargin);
                         RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(2 * circleRadius, 2 * circleRadius);
                         params.leftMargin = leftMargin;
                         params.topMargin = topMargin;

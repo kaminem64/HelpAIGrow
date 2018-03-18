@@ -109,11 +109,16 @@ public class ExpTwoGroupOneActivity extends SpeechActivity {
             @Override
             public void onClick(View view) {
                 @SuppressLint("DefaultLocale") String query = String.format("conversation_token=%s&message=", conversationToken);
-                Log.d("conversationToken", query);
+//                Log.d("conversationToken", query);
                 new FetchResponse().execute(query);
             }
         });
 
+        responseServer = new ResponseServer(this);
+        responseServer.setResponseServerAddress(getResponseServerUrl());
+        responseServer.setResponseDelay(getResponseDelay());
+        responseServer.setOnUtteranceStart(pauseRecognitionRunnable);
+        responseServer.setOnUtteranceFinished(resumeRecognitionRunnable);
     }
 
 
@@ -141,10 +146,13 @@ public class ExpTwoGroupOneActivity extends SpeechActivity {
     @Override
     protected void onStart() {
         super.onStart();
-        showStatus(false);
+        showStatus(false); //Shows the loading animations
         bindSpeechService();
-        bindResponseService();
         // Start listening to voices
+    }
+
+    @Override
+    protected void startSpeechDependentService() {
         if (ActivityCompat.checkSelfPermission(getActivity(), Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
             startVoiceRecorder();
         } else if (ActivityCompat.shouldShowRequestPermissionRationale(getActivity(), Manifest.permission.RECORD_AUDIO)) {
@@ -152,27 +160,26 @@ public class ExpTwoGroupOneActivity extends SpeechActivity {
         } else {
             ActivityCompat.requestPermissions(getActivity(), new String[]{Manifest.permission.RECORD_AUDIO}, REQUEST_RECORD_AUDIO_PERMISSION);
         }
-
-        InitializationCheck initializationCheck = new InitializationCheck();
-        initializationCheck.start();
+        if(!isIceBroken) {
+            responseServer.breakTheIce();
+            isIceBroken = true;
+        }
     }
 
     @Override
     protected void onStop() {
+        super.onStop();
         // Stop listening to voice
         stopVoiceRecorder();
         // Unbind Services
-        unBindResponseService();
         unBindSpeechService();
-        super.onStop();
     }
 
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        unBindResponseService();
-        unBindSpeechService();
-    }
+//    @Override
+//    protected void onDestroy() {
+//        super.onDestroy();
+//        unBindSpeechService();
+//    }
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     @Override
@@ -194,8 +201,8 @@ public class ExpTwoGroupOneActivity extends SpeechActivity {
     protected void finalizedRecognizedText(String text) {
         recognizedText.setText(text);
         recognizedTextBuffer.add(text);
-        mResponseService.setReceivedMessage(recognizedTextBuffer);
-        mResponseService.respond();
+        responseServer.setReceivedMessage(recognizedTextBuffer);
+        responseServer.respond();
     }
 
     @Override
@@ -295,7 +302,7 @@ public class ExpTwoGroupOneActivity extends SpeechActivity {
             StringBuilder result = new StringBuilder();
             try {
                 String urlParameters = strings[0];
-                Log.d("urlParameters", urlParameters);
+//                Log.d("urlParameters", urlParameters);
                 URL url = new URL("http://amandabot.xyz/conversation_finished/");
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();
                 conn.setReadTimeout(10000);
@@ -310,7 +317,7 @@ public class ExpTwoGroupOneActivity extends SpeechActivity {
                 writer.close();
                 os.close();
                 int status = conn.getResponseCode();
-                Log.d("Location", "HTTP STATUS: " + String.valueOf(status));
+//                Log.d("Location", "HTTP STATUS: " + String.valueOf(status));
                 InputStream inputStream = conn.getInputStream();
                 BufferedReader in = new BufferedReader(new InputStreamReader(inputStream, "UTF-8"));
                 for (int c; (c = in.read()) >= 0;)
@@ -328,9 +335,9 @@ public class ExpTwoGroupOneActivity extends SpeechActivity {
             super.onPostExecute(result);
             try {
                 JSONObject resultJSON = new JSONObject(result);
-                Log.d("ServerStat", "Created the JSON Obj");
+//                Log.d("ServerStat", "Created the JSON Obj");
                 JSONObject response = resultJSON.getJSONObject("response");
-                Log.d("ServerStat", "Got response");
+//                Log.d("ServerStat", "Got response");
                 boolean success = response.getBoolean("success");
                 Log.d("ServerStat", "Got success");
                 if (success) {

@@ -2,7 +2,6 @@ package com.helpaigrow;
 
 import android.Manifest;
 import android.content.ComponentName;
-import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
@@ -12,8 +11,6 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
 import android.util.Log;
-import android.view.View;
-
 
 public abstract class SpeechActivity extends AppCompatActivity implements MessageDialogFragment.Listener {
 
@@ -27,12 +24,13 @@ public abstract class SpeechActivity extends AppCompatActivity implements Messag
     protected boolean isSpeechServiceRunning = false;
     protected boolean isTalking = false;
     protected boolean ismApiWorking = false;
+    protected boolean isSilenceTimerRunning = false;
 
     // Services
     protected SpeechService mSpeechService;
-    protected ResponseService mResponseService;
-    protected boolean isResponseServiceBound = false;
     protected boolean isSpeechServiceBound = false;
+
+    protected ResponseServer responseServer;
 
 
     //Voice Recorder
@@ -51,29 +49,6 @@ public abstract class SpeechActivity extends AppCompatActivity implements Messag
     protected abstract long getResponseDelay();
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    class InitializationCheck extends Thread {
-        public void run() {
-            synchronized (mLock) {
-                while(true) {
-                    if(!(isSpeechServiceBound && isResponseServiceBound)){
-                        runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                showLoadingState();
-                            }
-                        });
-                    } else {
-                        if(!isIceBroken) {
-                            mResponseService.breakTheIce();
-                            isIceBroken = true;
-                            break;
-                        }
-                    }
-                }
-            }
-        }
-    }
 
     /**
      * Voice Recorder
@@ -130,6 +105,21 @@ public abstract class SpeechActivity extends AppCompatActivity implements Messag
             mVoiceRecorder = null;
         }
     }
+
+
+    protected Runnable pauseRecognitionRunnable = new Runnable() {
+        @Override
+        public void run() {
+            pauseRecognition();
+        }
+    };
+    protected Runnable resumeRecognitionRunnable = new Runnable() {
+        @Override
+        public void run() {
+            resumeRecognition();
+        }
+    };
+
     protected void pauseRecognition(){
         try {
             // Stop listening to voice
@@ -165,18 +155,13 @@ public abstract class SpeechActivity extends AppCompatActivity implements Messag
             if (isFinal) {
                 mVoiceRecorder.dismiss();
             }
-            if (!TextUtils.isEmpty(text) && isResponseServiceBound) {runOnUiThread(new Runnable() { //mText != null &&
+            if (!TextUtils.isEmpty(text)) {runOnUiThread(new Runnable() { //mText != null &&
                 @Override
                 public void run() {
                     try {
                         if (isFinal) {
                             finalizedRecognizedText(text);
-
                         } else {
-                            try {
-                                mResponseService.killSilenceTimer();
-                            } catch (Exception ignored) {
-                            }
                             unFinalizedRecognizedText(text);
                         }
                     } catch (Exception e) {
@@ -187,6 +172,13 @@ public abstract class SpeechActivity extends AppCompatActivity implements Messag
             }
         }
     };
+
+    protected void onSpeechServiceReady(){
+        startSpeechDependentService();
+        showStatus(false);
+    }
+
+    protected abstract void startSpeechDependentService();
 
     /**
      * Showing the user that Amanda is listening
@@ -242,6 +234,7 @@ public abstract class SpeechActivity extends AppCompatActivity implements Messag
         public void onServiceConnected(ComponentName componentName, IBinder binder) {
             mSpeechService = SpeechService.from(binder);
             mSpeechService.addListener(mSpeechServiceListener);
+            mSpeechService.setSpeechActivity(SpeechActivity.this);
             isSpeechServiceBound = true;
             isSpeechServiceRunning = true;
         }
@@ -252,7 +245,6 @@ public abstract class SpeechActivity extends AppCompatActivity implements Messag
             isSpeechServiceBound = false;
             isSpeechServiceRunning = false;
         }
-
     };
 
 
@@ -274,57 +266,9 @@ public abstract class SpeechActivity extends AppCompatActivity implements Messag
             } catch (Exception e) {
                 Log.d("onStop", "SpeechService is already stopped");
             }
-            mSpeechService = null;
         }
+        isSpeechServiceBound = false;
     }
-
-    /**
-     * An object from ServiceConnection Class:
-     * Establishes a communication channel to the ResponseService
-     */
-    protected final ServiceConnection mResponseServiceConnection = new ServiceConnection() {
-
-        @Override
-        public void onServiceConnected(ComponentName componentName, IBinder binder) {
-            Log.d("ResponseService", "Connected");
-            ResponseService.ResponseBinder responseBinder = (ResponseService.ResponseBinder) binder;
-            mResponseService = responseBinder.getService();
-            mResponseService.setActivity(getActivity());
-            mResponseService.setResponseServerAddress(getResponseServerUrl());
-            mResponseService.setResponseDelay(getResponseDelay());
-            isResponseServiceBound = true;
-        }
-
-        @Override
-        public void onServiceDisconnected(ComponentName componentName) {
-            mResponseService = null;
-            isResponseServiceBound = false;
-        }
-
-    };
-
-    protected void bindResponseService() {
-        // Establish a connection to ResponseService
-        Intent intent = new Intent(getActivity(), ResponseService.class);
-        bindService(intent, mResponseServiceConnection, Context.BIND_AUTO_CREATE);
-    }
-
-    protected void unBindResponseService() {
-        if(isResponseServiceBound) {
-            try {
-                mResponseService.stopSpeaking();
-            } catch (Exception e) {
-                Log.d("onStop", "stopSpeaking is not working");
-            }
-            try {
-                getActivity().unbindService(mResponseServiceConnection);
-            } catch (Exception e) {
-                Log.d("onStop", "mResponseServiceConnection is already unbindService");
-            }
-            mResponseService = null;
-        }
-    }
-
 
     /**
      * Handling all permission related tasks

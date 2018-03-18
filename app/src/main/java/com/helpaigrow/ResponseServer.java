@@ -1,24 +1,18 @@
 package com.helpaigrow;
 
 import android.annotation.SuppressLint;
-import android.app.Service;
 import android.content.Context;
-import android.content.Intent;
 import android.content.SharedPreferences;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.os.AsyncTask;
-import android.os.Binder;
-import android.os.IBinder;
 import android.text.TextUtils;
 import android.util.Log;
-
 import com.amazonaws.auth.CognitoCachingCredentialsProvider;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.polly.AmazonPollyPresigningClient;
 import com.amazonaws.services.polly.model.OutputFormat;
 import com.amazonaws.services.polly.model.SynthesizeSpeechPresignRequest;
-
 import org.json.JSONException;
 import org.json.JSONObject;
 import java.io.BufferedReader;
@@ -33,7 +27,7 @@ import java.util.ArrayList;
 import java.util.Timer;
 import java.util.TimerTask;
 
-public class ResponseService extends Service {
+public class ResponseServer {
 
     // Amazon Polly
     private static final String COGNITO_POOL_ID = "us-east-2:b0d2f207-55ba-4077-8d2a-83cab24695b3";
@@ -60,21 +54,16 @@ public class ResponseService extends Service {
     private Runnable onUtteranceStartCallback;
     private Runnable onUtteranceFinishedCallback;
 
-    /**
-     * Providing a communication channel for clients
-     */
-    private final IBinder mBinder = new ResponseBinder();
+    public ResponseServer(SpeechActivity activity) {
 
-    @Override
-    public void onCreate() {
-        super.onCreate();
+        this.activity = activity;
 
         // Restore preferences
-        final SharedPreferences settings = getSharedPreferences(USERSETTINGS, 0);
+        final SharedPreferences settings = activity.getSharedPreferences(USERSETTINGS, 0);
         conversationToken = settings.getString("conversationToken", "");
         voicePersona = settings.getString("voicePersona", "Joanna");
 
-        audioManager = (AudioManager)getSystemService(Context.AUDIO_SERVICE);
+        audioManager = (AudioManager)activity.getSystemService(Context.AUDIO_SERVICE);
         assert audioManager != null;
         audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, (audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)*3)/4 , 0);
 
@@ -89,7 +78,7 @@ public class ResponseService extends Service {
     void initPollyClient() {
         // Initialize the Amazon Cognito credentials provider.
         credentialsProvider = new CognitoCachingCredentialsProvider(
-                getApplicationContext(),
+                this.activity.getApplicationContext(),
                 COGNITO_POOL_ID,
                 MY_REGION
         );
@@ -133,13 +122,13 @@ public class ResponseService extends Service {
             public void onCompletion(MediaPlayer mp) {
                 mp.release();
                 setupNewMediaPlayer();
-                ResponseService.this.onUtteranceFinished();
+                ResponseServer.this.onUtteranceFinished();
             }
         });
         mediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
             @Override
             public void onPrepared(MediaPlayer mp) {
-                ResponseService.this.onUtteranceStart();
+                ResponseServer.this.onUtteranceStart();
                 mp.start();
             }
         });
@@ -151,19 +140,6 @@ public class ResponseService extends Service {
         });
     }
 
-    @Override
-    public void onDestroy() {
-        mediaPlayer = null;
-
-        super.onDestroy();
-    }
-
-    @Override
-    public IBinder onBind(Intent intent) {
-        // Returns the communication channel to the service.
-        return mBinder;
-    }
-
     public void setResponseServerAddress(String responseServerAddress) {
         this.responseServerAddress = responseServerAddress;
     }
@@ -172,11 +148,6 @@ public class ResponseService extends Service {
         this.responseDelay = responseDelay;
     }
 
-    class ResponseBinder extends Binder {
-        ResponseService getService(){
-            return ResponseService.this;
-        }
-    }
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     /**

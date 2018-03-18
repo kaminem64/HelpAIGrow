@@ -50,9 +50,13 @@ public class ExpOneActivity extends SpeechActivity {
         loadingWhiteTransparent.setVisibility(View.GONE);
 
         recognizedText = findViewById(R.id.recognizedTextExp1);
-
         recognizedTextBuffer = new ArrayList<>();
 
+        responseServer = new ResponseServer(this);
+        responseServer.setResponseServerAddress(getResponseServerUrl());
+        responseServer.setResponseDelay(getResponseDelay());
+        responseServer.setOnUtteranceStart(pauseRecognitionRunnable);
+        responseServer.setOnUtteranceFinished(resumeRecognitionRunnable);
     }
 
     @Override
@@ -81,16 +85,21 @@ public class ExpOneActivity extends SpeechActivity {
         } else {
             firstTimeShown = false;
         }
-        showStatus(false);
+        showStatus(false);  //Shows the loading animations
         bindSpeechService();
-        bindResponseService();
+    }
+
+    @Override
+    protected void startSpeechDependentService() {
         if (ActivityCompat.shouldShowRequestPermissionRationale(getActivity(), Manifest.permission.RECORD_AUDIO)) {
             showPermissionMessageDialog();
         } else {
             ActivityCompat.requestPermissions(getActivity(), new String[]{Manifest.permission.RECORD_AUDIO}, REQUEST_RECORD_AUDIO_PERMISSION);
         }
-        InitializationCheck initializationCheck = new InitializationCheck();
-        initializationCheck.start();
+        if(!isIceBroken) {
+            responseServer.breakTheIce();
+            isIceBroken = true;
+        }
     }
 
     @Override
@@ -98,17 +107,15 @@ public class ExpOneActivity extends SpeechActivity {
         // Stop listening to voice
         stopVoiceRecorder();
         // Unbind Services
-        unBindResponseService();
         unBindSpeechService();
         super.onStop();
     }
 
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        unBindResponseService();
-        unBindSpeechService();
-    }
+//    @Override
+//    protected void onDestroy() {
+//        super.onDestroy();
+//        unBindSpeechService();
+//    }
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     @Override
@@ -130,12 +137,20 @@ public class ExpOneActivity extends SpeechActivity {
     protected void finalizedRecognizedText(String text) {
         recognizedText.setText(text);
         recognizedTextBuffer.add(text);
-        mResponseService.setReceivedMessage(recognizedTextBuffer);
-        mResponseService.startSilenceTimer();
+        responseServer.setReceivedMessage(recognizedTextBuffer);
+        responseServer.startSilenceTimer();
+        isSilenceTimerRunning = true;
     }
 
     @Override
     protected void unFinalizedRecognizedText(String text) {
+        if (isSilenceTimerRunning) {
+            try {
+                responseServer.killSilenceTimer();
+                isSilenceTimerRunning = false;
+            } catch (Exception ignored) {
+            }
+        }
         recognizedText.setText(text);
     }
 

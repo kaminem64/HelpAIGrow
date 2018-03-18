@@ -83,15 +83,6 @@ public class WelcomeActivity extends AppCompatActivity {
                 return handled;
             }
         });
-
-        Button button = findViewById(R.id.exp3Button);
-        button.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                startActivity(new Intent(WelcomeActivity.this, ExpThreeGroupTwo.class));
-            }
-        });
-
     }
 
     @Override

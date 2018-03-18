@@ -176,6 +176,10 @@ public class AuthActivity extends AppCompatActivity {
                                     goToNextPage[0] = new Intent(AuthActivity.this, ConsentFormActivity.class);
                                     goToNextPage[0].putExtra("experimentClass","com.helpaigrow.ExpTwoGroupTwoActivity");
                                     break;
+                                case 30:
+                                    goToNextPage[0] = new Intent(AuthActivity.this, ConsentFormActivity.class);
+                                    goToNextPage[0].putExtra("experimentClass","com.helpaigrow.ExpThreeGroupTwo");
+                                    break;
                                 default:
                                     goToNextPage[0] = new Intent(AuthActivity.this, WelcomeActivity.class);
                                     break;

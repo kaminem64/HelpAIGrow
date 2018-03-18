@@ -9,12 +9,10 @@ import android.os.AsyncTask;
 import android.os.Binder;
 import android.os.Handler;
 import android.os.IBinder;
-import android.os.Looper;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.text.TextUtils;
 import android.util.Log;
-import android.widget.Toast;
 
 import com.google.auth.Credentials;
 import com.google.auth.oauth2.AccessToken;
@@ -79,6 +77,7 @@ public class SpeechService extends Service {
 
     }
 
+    private SpeechActivity speechActivity;
     private static final String TAG = "SpeechService";
 
     private static final String PREFS = "SpeechService";
@@ -200,6 +199,13 @@ public class SpeechService extends Service {
         return false;
     }
 
+    public void setSpeechActivity(SpeechActivity speechActivity){
+        this.speechActivity = speechActivity;
+    }
+    public void onServiceReady() {
+        this.speechActivity.onSpeechServiceReady();
+    }
+
     private void fetchAccessToken() {
         if (mAccessTokenTask != null) {
             return;
@@ -255,10 +261,10 @@ public class SpeechService extends Service {
         speechBuilder.addPhrases("temperature");
         speechBuilder.addPhrases("Kambiz");
 
-                        mRequestObserver = mApi.streamingRecognize(mResponseObserver);
+        mRequestObserver = mApi.streamingRecognize(mResponseObserver);
         mRequestObserver.onNext(StreamingRecognizeRequest.newBuilder()
-                .setStreamingConfig(StreamingRecognitionConfig.newBuilder()
-                        .setConfig(RecognitionConfig.newBuilder()
+                                .setStreamingConfig(StreamingRecognitionConfig.newBuilder()
+                                .setConfig(RecognitionConfig.newBuilder()
                                 .setLanguageCode(getDefaultLanguageCode())
                                 .setEncoding(RecognitionConfig.AudioEncoding.LINEAR16)
                                 .setSampleRateHertz(sampleRate)
@@ -401,6 +407,7 @@ public class SpeechService extends Service {
                                 - ACCESS_TOKEN_FETCH_MARGIN, ACCESS_TOKEN_EXPIRATION_TOLERANCE));
             }
             Log.i("SpeechService", "AccessTokenTask onPostExecute mApi and Schedule access token refresh");
+            onServiceReady();
         }
     }
 
