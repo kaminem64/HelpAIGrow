@@ -1,16 +1,20 @@
 package com.helpaigrow;
 
 import android.annotation.SuppressLint;
+import android.app.ActionBar;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
+import android.os.Build;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+
+import java.util.Objects;
 
 public class QuestionsActivity extends AppCompatActivity {
     public static final String USERSETTINGS = "PrefsFile";
@@ -25,6 +29,9 @@ public class QuestionsActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_questions);
         setTitle("Questions");
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+            Objects.requireNonNull(getSupportActionBar()).setDisplayHomeAsUpEnabled(true);
+        }
 
         SharedPreferences settings = getSharedPreferences(USERSETTINGS, 0);
         uniqueID = settings.getString("uniqueID", "");
@@ -67,6 +74,15 @@ public class QuestionsActivity extends AppCompatActivity {
         builder.setMessage("Are you sure you want to close the questionnaire?")
                 .setPositiveButton("Yes", dialogClickListener)
                 .setNegativeButton("No", dialogClickListener).show();
+    }
+
+    @Override
+    public boolean onSupportNavigateUp(){
+        AlertDialog.Builder builder = new AlertDialog.Builder(QuestionsActivity.this);
+        builder.setMessage("Are you sure you want to close the questionnaire?")
+                .setPositiveButton("Yes", dialogClickListener)
+                .setNegativeButton("No", dialogClickListener).show();
+        return true;
     }
 
 }

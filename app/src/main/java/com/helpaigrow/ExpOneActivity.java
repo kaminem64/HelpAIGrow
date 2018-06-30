@@ -1,15 +1,19 @@
 package com.helpaigrow;
 
 import android.Manifest;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.app.ActivityCompat;
+import android.support.v7.app.AlertDialog;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.ImageButton;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import java.util.ArrayList;
+import java.util.Objects;
 
 public class ExpOneActivity extends SpeechActivity {
 
@@ -41,6 +45,11 @@ public class ExpOneActivity extends SpeechActivity {
         setContentView(R.layout.activity_exp_one);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+            Objects.requireNonNull(getSupportActionBar()).setDisplayHomeAsUpEnabled(true);
+        }
+
+
         microphoneIcon = findViewById(R.id.microphoneButtonExp1);
 
         spinner = findViewById(R.id.progressBarExp1);
@@ -59,12 +68,39 @@ public class ExpOneActivity extends SpeechActivity {
         responseServer.setOnUtteranceFinished(resumeRecognitionRunnable);
     }
 
+
+    DialogInterface.OnClickListener dialogClickListener = new DialogInterface.OnClickListener() {
+        @Override
+        public void onClick(DialogInterface dialog, int which) {
+            switch (which){
+                case DialogInterface.BUTTON_POSITIVE:
+                    onStop();
+                    Intent goBackIntent = new Intent(ExpOneActivity.this, WelcomeActivity.class);
+                    goBackIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+                    startActivity(goBackIntent);
+                    break;
+
+                case DialogInterface.BUTTON_NEGATIVE:
+                    break;
+            }
+        }
+    };
+
     @Override
     public void onBackPressed() {
-        onStop();
-        Intent goBackIntent = new Intent(ExpOneActivity.this, WelcomeActivity.class);
-        goBackIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
-        startActivity(goBackIntent);
+        AlertDialog.Builder builder = new AlertDialog.Builder(ExpOneActivity.this);
+        builder.setMessage("Are you sure you want to close the experiment?")
+                .setPositiveButton("Yes", dialogClickListener)
+                .setNegativeButton("No", dialogClickListener).show();
+    }
+
+    @Override
+    public boolean onSupportNavigateUp(){
+        AlertDialog.Builder builder = new AlertDialog.Builder(ExpOneActivity.this);
+        builder.setMessage("Are you sure you want to close the experiment?")
+                .setPositiveButton("Yes", dialogClickListener)
+                .setNegativeButton("No", dialogClickListener).show();
+        return true;
     }
 
 
