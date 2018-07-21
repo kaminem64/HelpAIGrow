@@ -22,6 +22,7 @@ public class QuestionsActivity extends AppCompatActivity {
     String questionnaireUrl;
     String uniqueID;
     int appExperimentCode;
+    int groupNumber;
 
     @SuppressLint("SetJavaScriptEnabled")
     @Override
@@ -38,7 +39,8 @@ public class QuestionsActivity extends AppCompatActivity {
 
         appExperimentCode = settings.getInt("appExperimentCode", 0);
         questionnaireUrl = settings.getString("questionnaireUrl", "");
-        questionnaireUrl = questionnaireUrl + "?unique_id=" + uniqueID + "&experiment_code=" + appExperimentCode;
+        groupNumber = settings.getInt("groupNumber", 0);
+        questionnaireUrl = questionnaireUrl + "?unique_id=" + uniqueID + "&experiment_code=" + appExperimentCode + "&group_number=" + groupNumber;
         try {
             webView = findViewById(R.id.questionsWebView);
             webView.setWebViewClient(new WebViewClient());
