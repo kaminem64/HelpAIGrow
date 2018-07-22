@@ -103,8 +103,8 @@ public class WelcomeActivity extends AppCompatActivity {
                 startActivity(intent);
                 break;
             case R.id.menu_about:
-                Intent launchBrowser = new Intent(Intent.ACTION_VIEW, Uri.parse("http://amandabot.xyz/about/"));
-                startActivity(launchBrowser);
+                intent = new Intent(WelcomeActivity.this, AboutActivity.class);
+                startActivity(intent);
                 break;
             default:
                 break;
