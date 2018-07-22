@@ -106,6 +106,13 @@ public abstract class SpeechActivity extends AppCompatActivity implements Messag
         }
     }
 
+    protected void stopSpeaking() {
+        if (responseServer != null) {
+            responseServer.stopSpeaking();
+            responseServer = null;
+        }
+    }
+
 
     protected Runnable pauseRecognitionRunnable = new Runnable() {
         @Override

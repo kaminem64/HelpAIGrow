@@ -94,6 +94,13 @@ public class ExpOneActivity extends SpeechActivity {
                 .setNegativeButton("No", dialogClickListener).show();
     }
 
+    public void goBack() {
+        onStop();
+        Intent goBackIntent = new Intent(ExpOneActivity.this, WelcomeActivity.class);
+        goBackIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+        startActivity(goBackIntent);
+    }
+
     @Override
     public boolean onSupportNavigateUp(){
         AlertDialog.Builder builder = new AlertDialog.Builder(ExpOneActivity.this);
@@ -117,7 +124,7 @@ public class ExpOneActivity extends SpeechActivity {
     protected void onStart() {
         super.onStart();
         if(!firstTimeShown) {
-            onBackPressed();
+            goBack();
         } else {
             firstTimeShown = false;
         }
@@ -140,6 +147,8 @@ public class ExpOneActivity extends SpeechActivity {
 
     @Override
     protected void onStop() {
+        // Stop speaking
+        stopSpeaking();
         // Stop listening to voice
         stopVoiceRecorder();
         // Unbind Services

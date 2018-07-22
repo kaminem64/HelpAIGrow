@@ -168,9 +168,11 @@ public class ResponseServer {
             speakingAgent = null;
         }
         if(mediaPlayer != null) {
-            mediaPlayer.stop();
-            mediaPlayer.release();
-            mediaPlayer = null;
+            try {
+                mediaPlayer.stop();
+                mediaPlayer.release();
+                mediaPlayer = null;
+            } catch (Exception ignore){}
         }
     }
 
