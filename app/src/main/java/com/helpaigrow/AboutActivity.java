@@ -1,18 +1,15 @@
 package com.helpaigrow;
 
 import android.annotation.SuppressLint;
-import android.app.ActionBar;
-import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Build;
-import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import com.helpaigrow.BuildConfig;
 
 import java.util.Objects;
 
@@ -28,8 +25,8 @@ public class AboutActivity extends AppCompatActivity {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
             Objects.requireNonNull(getSupportActionBar()).setDisplayHomeAsUpEnabled(true);
         }
-
-        String aboutPageUrl = "http://amandabot.xyz/about/110";
+        String versionName = BuildConfig.VERSION_NAME;
+        String aboutPageUrl = "http://amandabot.xyz/about/" + versionName + "/";
 
         try {
             webView = findViewById(R.id.aboutWebView);

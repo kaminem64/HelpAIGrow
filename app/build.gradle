@@ -12,8 +12,8 @@ android {
         applicationId "com.kaminem64.amanda"
         minSdkVersion 15
         targetSdkVersion 26
-        versionCode 9
-        versionName "1.08"
+        versionCode 11
+        versionName "1.10"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
 
@@ -65,15 +65,15 @@ dependencies {
     // Support libraries
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     implementation 'com.android.support:appcompat-v7:26.1.0'
-    implementation 'com.android.support.constraint:constraint-layout:1.0.2'
+    implementation 'com.android.support.constraint:constraint-layout:1.1.2'
 
     // gRPC
     implementation "io.grpc:grpc-okhttp:$grpcVersion"
     implementation "io.grpc:grpc-protobuf-lite:$grpcVersion"
     implementation "io.grpc:grpc-stub:$grpcVersion"
     implementation "javax.annotation:javax.annotation-api:1.2"
-    implementation "com.android.support.constraint:constraint-layout:1.0.2"
-    protobuf "com.google.protobuf:protobuf-java:3.3.1"
+    implementation "com.android.support.constraint:constraint-layout:1.1.2"
+    protobuf "com.google.protobuf:protobuf-java:3.4.0"
 
     // OAuth2 for Google API
     implementation("com.google.auth:google-auth-library-oauth2-http:0.7.0") {
@@ -83,8 +83,8 @@ dependencies {
     // Tests
     testImplementation "junit:junit:4.12"
     testImplementation 'junit:junit:4.12'
-    androidTestImplementation 'com.android.support.test:runner:1.0.1'
-    androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.1'
+    androidTestImplementation 'com.android.support.test:runner:1.0.2'
+    androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
 }
 
 
@@ -96,4 +96,3 @@ task copySecretKey(type: Copy) {
     rename secretKey.getName(), "credential.json"
 }
 preBuild.dependsOn(copySecretKey)
-
