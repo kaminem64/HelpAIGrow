@@ -89,7 +89,7 @@ public class ExpOneActivity extends SpeechActivity {
     @Override
     public void onBackPressed() {
         AlertDialog.Builder builder = new AlertDialog.Builder(ExpOneActivity.this);
-        builder.setMessage("Are you sure you want to close the experiment?")
+        builder.setMessage("Are you sure you want to close the study?")
                 .setPositiveButton("Yes", dialogClickListener)
                 .setNegativeButton("No", dialogClickListener).show();
     }
@@ -104,7 +104,7 @@ public class ExpOneActivity extends SpeechActivity {
     @Override
     public boolean onSupportNavigateUp(){
         AlertDialog.Builder builder = new AlertDialog.Builder(ExpOneActivity.this);
-        builder.setMessage("Are you sure you want to close the experiment?")
+        builder.setMessage("Are you sure you want to close the study?")
                 .setPositiveButton("Yes", dialogClickListener)
                 .setNegativeButton("No", dialogClickListener).show();
         return true;
