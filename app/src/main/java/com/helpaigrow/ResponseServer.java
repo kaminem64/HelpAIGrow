@@ -32,29 +32,29 @@ public class ResponseServer {
     // Amazon Polly
     private static final String COGNITO_POOL_ID = "us-east-2:b0d2f207-55ba-4077-8d2a-83cab24695b3";
     private static final Regions MY_REGION = Regions.US_EAST_2;
-    CognitoCachingCredentialsProvider credentialsProvider;
+    private CognitoCachingCredentialsProvider credentialsProvider;
     private AmazonPollyPresigningClient client;
-    MediaPlayer mediaPlayer;
+    private MediaPlayer mediaPlayer;
 
     private String responseServerAddress;
     private AsyncTask<Void, Void, Void> speakingAgent;
 
     // Settings
-    public static final String USERSETTINGS = "PrefsFile";
+    private static final String USERSETTINGS = "PrefsFile";
 
     private String conversationToken;
     private String voicePersona;
     private long responseDelay;
     private SpeechActivity activity;
-    Timer timer;
-    TimerTask timerTask;
+    private Timer timer;
+    private TimerTask timerTask;
     private ArrayList<String> receivedMessage;
     private AudioManager audioManager;
 
     private Runnable onUtteranceStartCallback;
     private Runnable onUtteranceFinishedCallback;
 
-    public ResponseServer(SpeechActivity activity) {
+    ResponseServer(SpeechActivity activity) {
 
         this.activity = activity;
 
@@ -75,7 +75,7 @@ public class ResponseServer {
         this.activity = activity;
     }
 
-    void initPollyClient() {
+    private void initPollyClient() {
         // Initialize the Amazon Cognito credentials provider.
         credentialsProvider = new CognitoCachingCredentialsProvider(
                 this.activity.getApplicationContext(),
@@ -109,7 +109,7 @@ public class ResponseServer {
         activity.pauseRecognition();
     }
 
-    void setupNewMediaPlayer() {
+    private void setupNewMediaPlayer() {
         mediaPlayer = new MediaPlayer();
 
 
@@ -232,7 +232,7 @@ public class ResponseServer {
     /**
      * Getters and Setters
      */
-    public ArrayList<String> getReceivedMessage() {
+    private ArrayList<String> getReceivedMessage() {
         return receivedMessage;
     }
 

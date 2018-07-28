@@ -121,7 +121,6 @@
 
 
         <service android:name=".SpeechService" />
-        <service android:name=".ResponseService" />
 
 
         <activity
