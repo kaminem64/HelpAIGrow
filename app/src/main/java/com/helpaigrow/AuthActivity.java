@@ -145,6 +145,7 @@ public class AuthActivity extends AppCompatActivity {
                 editor.putString("voicePersona", response.getString("voice_persona"));
                 editor.putString("consentFormUrl", response.getString("consent_form_url"));
                 editor.putInt("groupNumber", groupNumber);
+                editor.putInt("prePostGroupNumber", response.getInt("pre_post_group"));
                 final int appExperimentCode = response.getInt("app_experiment_code");
                 editor.putInt("appExperimentCode", appExperimentCode);
                 String userPk = response.getString("user_pk");

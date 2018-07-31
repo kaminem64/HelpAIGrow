@@ -22,6 +22,7 @@ public class PreTestActivity extends AppCompatActivity {
     String uniqueID;
     int appExperimentCode;
     int groupNumber;
+    int prePostGroupNumber;
 
     Class<?> experimentClass;
 
@@ -53,7 +54,8 @@ public class PreTestActivity extends AppCompatActivity {
         appExperimentCode = settings.getInt("appExperimentCode", 0);
         preTestUrl = settings.getString("preTestUrl", "");
         groupNumber = settings.getInt("groupNumber", 0);
-        preTestUrl = preTestUrl + "?unique_id=" + uniqueID + "&experiment_code=" + appExperimentCode + "&group_number=" + groupNumber;
+        prePostGroupNumber = settings.getInt("prePostGroupNumber", 0);
+        preTestUrl = preTestUrl + "?unique_id=" + uniqueID + "&experiment_code=" + appExperimentCode + "&group_number=" + groupNumber + "&pre_post_group=" + prePostGroupNumber;
         try {
             webView = findViewById(R.id.preTestWebView);
             webView.setWebViewClient(new WebViewClient());

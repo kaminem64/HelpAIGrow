@@ -22,6 +22,7 @@ public class QuestionsActivity extends AppCompatActivity {
     String uniqueID;
     int appExperimentCode;
     int groupNumber;
+    int prePostGroupNumber;
 
     @SuppressLint("SetJavaScriptEnabled")
     @Override
@@ -39,7 +40,8 @@ public class QuestionsActivity extends AppCompatActivity {
         appExperimentCode = settings.getInt("appExperimentCode", 0);
         questionnaireUrl = settings.getString("questionnaireUrl", "");
         groupNumber = settings.getInt("groupNumber", 0);
-        questionnaireUrl = questionnaireUrl + "?unique_id=" + uniqueID + "&experiment_code=" + appExperimentCode + "&group_number=" + groupNumber;
+        prePostGroupNumber = settings.getInt("prePostGroupNumber", 0);
+        questionnaireUrl = questionnaireUrl + "?unique_id=" + uniqueID + "&experiment_code=" + appExperimentCode + "&group_number=" + groupNumber + "&pre_post_group=" + prePostGroupNumber;
         try {
             webView = findViewById(R.id.questionsWebView);
             webView.setWebViewClient(new WebViewClient());
