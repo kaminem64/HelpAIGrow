@@ -23,8 +23,7 @@ public class ConsentFormActivity extends AppCompatActivity implements MessageDia
     WebView webView;
     Button acceptButton;
     Button declineButton;
-
-    Class<?> experimentClass;
+    String className;
 
     private static final int REQUEST_RECORD_AUDIO_PERMISSION = 1;
 
@@ -36,13 +35,7 @@ public class ConsentFormActivity extends AppCompatActivity implements MessageDia
 
         Bundle extras = getIntent().getExtras();
         assert extras != null;
-        String classname = extras.getString("experimentClass");
-        try {
-            experimentClass = Class.forName(classname);
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
-            experimentClass = WelcomeActivity.class;
-        }
+        className = extras.getString("experimentClass");
 
         // Restore preferences
         SharedPreferences settings = getSharedPreferences(USERSETTINGS, 0);
@@ -91,7 +84,9 @@ public class ConsentFormActivity extends AppCompatActivity implements MessageDia
         if (requestCode == REQUEST_RECORD_AUDIO_PERMISSION) {
             if (permissions.length == 1 && grantResults.length == 1 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 Toast.makeText(ConsentFormActivity.this, "Let's start!", Toast.LENGTH_SHORT).show();
-                Intent startExperimentIntent = new Intent(ConsentFormActivity.this, experimentClass);
+                Intent startExperimentIntent = new Intent(ConsentFormActivity.this, PreTestActivity.class);
+                startExperimentIntent.putExtra("experimentClass",className);
+
                 startActivity(startExperimentIntent);
             } else if (Build.VERSION.SDK_INT >= 23 && !shouldShowRequestPermissionRationale(permissions[0])) {
                 AlertDialog.Builder builder;

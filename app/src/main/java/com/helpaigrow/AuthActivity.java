@@ -140,7 +140,8 @@ public class AuthActivity extends AppCompatActivity {
                 final int groupNumber = response.getInt("group_number");
                 SharedPreferences.Editor editor = settings.edit();
                 editor.putString("conversationToken", response.getString("conversation_token"));
-                editor.putString("questionnaireUrl", response.getString("questionnaire_url"));
+                editor.putString("postTestUrl", response.getString("post_test_url"));
+                editor.putString("preTestUrl", response.getString("pre_test_url"));
                 editor.putString("voicePersona", response.getString("voice_persona"));
                 editor.putString("consentFormUrl", response.getString("consent_form_url"));
                 editor.putInt("groupNumber", groupNumber);

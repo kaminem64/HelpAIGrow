@@ -14,8 +14,6 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme"
         tools:ignore="GoogleAppIndexingWarning">
-
-
         <activity
             android:name=".WelcomeActivity"
             android:screenOrientation="portrait">
@@ -25,8 +23,6 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
-
         <activity
             android:name=".AuthActivity"
             android:autoLink="web"
@@ -39,8 +35,6 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.helpaigrow.WelcomeActivity" />
         </activity>
-
-
         <activity
             android:name=".ConsentFormActivity"
             android:parentActivityName=".AuthActivity"
@@ -52,8 +46,6 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.helpaigrow.AuthActivity" />
         </activity>
-
-
         <activity
             android:name=".ExpOneActivity"
             android:parentActivityName=".WelcomeActivity"
@@ -65,8 +57,6 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.helpaigrow.WelcomeActivity" />
         </activity>
-
-
         <activity
             android:name=".ExpTwoGroupOneActivity"
             android:parentActivityName=".WelcomeActivity"
@@ -78,8 +68,6 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.helpaigrow.WelcomeActivity" />
         </activity>
-
-
         <activity
             android:name=".ExpTwoGroupTwoActivity"
             android:parentActivityName=".WelcomeActivity"
@@ -91,8 +79,6 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.helpaigrow.WelcomeActivity" />
         </activity>
-
-
         <activity
             android:name=".QuestionsActivity"
             android:parentActivityName=".WelcomeActivity"
@@ -104,8 +90,6 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.helpaigrow.WelcomeActivity" />
         </activity>
-
-
         <activity
             android:name=".ReportProblemActivity"
             android:autoLink="web"
@@ -119,33 +103,41 @@
                 android:value="com.helpaigrow.WelcomeActivity" />
         </activity>
 
-
         <service android:name=".SpeechService" />
-
 
         <activity
             android:name=".ExpThreeGroupTwo"
             android:autoLink="web"
             android:parentActivityName=".WelcomeActivity"
             android:screenOrientation="portrait"
-            tools:ignore="UnusedAttribute" >
-        <!-- The meta-data element is needed for versions lower than 4.1 -->
-        <meta-data
-            android:name="android.support.PARENT_ACTIVITY"
-            android:value="com.helpaigrow.WelcomeActivity" />
+            tools:ignore="UnusedAttribute">
+
+            <!-- The meta-data element is needed for versions lower than 4.1 -->
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.helpaigrow.WelcomeActivity" />
         </activity>
-
-
         <activity
             android:name=".AboutActivity"
             android:autoLink="web"
             android:parentActivityName=".WelcomeActivity"
             android:screenOrientation="portrait"
-            tools:ignore="UnusedAttribute" >
-        <!-- The meta-data element is needed for versions lower than 4.1 -->
-        <meta-data
-            android:name="android.support.PARENT_ACTIVITY"
-            android:value="com.helpaigrow.WelcomeActivity" />
+            tools:ignore="UnusedAttribute">
+
+            <!-- The meta-data element is needed for versions lower than 4.1 -->
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.helpaigrow.WelcomeActivity" />
+        </activity>
+        <activity android:name=".PreTestActivity"
+            android:parentActivityName=".WelcomeActivity"
+            android:screenOrientation="portrait"
+            tools:ignore="UnusedAttribute">
+
+            <!-- The meta-data element is needed for versions lower than 4.1 -->
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.helpaigrow.WelcomeActivity" />
         </activity>
     </application>
 
