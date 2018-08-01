@@ -18,7 +18,7 @@ import java.util.Objects;
 public class QuestionsActivity extends AppCompatActivity {
     public static final String USERSETTINGS = "PrefsFile";
     WebView webView;
-    String questionnaireUrl;
+    String postTestUrl;
     String uniqueID;
     int appExperimentCode;
     int groupNumber;
@@ -38,18 +38,18 @@ public class QuestionsActivity extends AppCompatActivity {
         uniqueID = settings.getString("uniqueID", "");
 
         appExperimentCode = settings.getInt("appExperimentCode", 0);
-        questionnaireUrl = settings.getString("questionnaireUrl", "");
+        postTestUrl = settings.getString("postTestUrl", "");
         groupNumber = settings.getInt("groupNumber", 0);
         prePostGroupNumber = settings.getInt("prePostGroupNumber", 0);
-        questionnaireUrl = questionnaireUrl + "?unique_id=" + uniqueID + "&experiment_code=" + appExperimentCode + "&group_number=" + groupNumber + "&pre_post_group=" + prePostGroupNumber;
+        postTestUrl = postTestUrl + "?unique_id=" + uniqueID + "&experiment_code=" + appExperimentCode + "&group_number=" + groupNumber + "&pre_post_group=" + prePostGroupNumber;
         try {
             webView = findViewById(R.id.questionsWebView);
             webView.setWebViewClient(new WebViewClient());
             WebSettings webSettings = webView.getSettings();
             webSettings.setJavaScriptEnabled(true);
-            webView.loadUrl(questionnaireUrl);
+            webView.loadUrl(postTestUrl);
         } catch(Exception e){
-            Intent launchBrowser = new Intent(Intent.ACTION_VIEW, Uri.parse(questionnaireUrl));
+            Intent launchBrowser = new Intent(Intent.ACTION_VIEW, Uri.parse(postTestUrl));
             startActivity(launchBrowser);
         }
     }
