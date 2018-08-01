@@ -235,7 +235,7 @@ public class ExpTwoGroupTwoActivity extends AppCompatActivity {
                 boolean success = response.getBoolean("success");
                 Log.d("ServerStat", "Got success");
                 if (success) {
-                    Intent goToQuestions = new Intent(ExpTwoGroupTwoActivity.this, QuestionsActivity.class);
+                    Intent goToQuestions = new Intent(ExpTwoGroupTwoActivity.this, PostTestActivity.class);
                     startActivity(goToQuestions);
                 } else {
                     Toast.makeText(ExpTwoGroupTwoActivity.this, "Server error!\nPlease try again later!", Toast.LENGTH_LONG).show();

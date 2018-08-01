@@ -19,6 +19,7 @@ public abstract class SpeechActivity extends AppCompatActivity implements Messag
     protected static final int REQUEST_RECORD_AUDIO_PERMISSION = 1;
 
     final Object mLock = new Object();
+    public static final String USERSETTINGS = "PrefsFile";
 
     protected boolean isIceBroken = false;
     protected boolean isSpeechServiceRunning = false;
@@ -39,6 +40,7 @@ public abstract class SpeechActivity extends AppCompatActivity implements Messag
     // Abstract Methods
     protected abstract void runCommand(int commandCode, String responseParameter, String nextCommandHintText, boolean hasTriedAllCommands);
     protected abstract void goToQuestions();
+    protected abstract void saveUtterance(String utterance);
     protected abstract void finalizedRecognizedText(String text);
     protected abstract void unFinalizedRecognizedText(String text);
     protected abstract void showListeningState(boolean hearingVoice);

@@ -212,7 +212,12 @@ public class ExpTwoGroupOneActivity extends SpeechActivity {
 
     @Override
     public void goToQuestions(){
-        startActivity(new Intent(ExpTwoGroupOneActivity.this, QuestionsActivity.class));
+        startActivity(new Intent(ExpTwoGroupOneActivity.this, PostTestActivity.class));
+    }
+
+    @Override
+    protected void saveUtterance(String utterance) {
+
     }
 
     public void runCommand(int commandCode, String responseParameter, String nextCommandHintText, boolean hasTriedAllCommands){

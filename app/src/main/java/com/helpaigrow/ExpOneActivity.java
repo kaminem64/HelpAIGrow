@@ -3,6 +3,7 @@ package com.helpaigrow;
 import android.Manifest;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.app.ActivityCompat;
@@ -14,6 +15,7 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import java.util.ArrayList;
 import java.util.Objects;
+import java.util.UUID;
 
 public class ExpOneActivity extends SpeechActivity {
 
@@ -231,7 +233,14 @@ public class ExpOneActivity extends SpeechActivity {
     }
     @Override
     public void goToQuestions(){
-        startActivity(new Intent(ExpOneActivity.this, QuestionsActivity.class));
+        startActivity(new Intent(ExpOneActivity.this, PostTestActivity.class));
+    }
+    @Override
+    public void saveUtterance(String utterance){
+        SharedPreferences settings = getSharedPreferences(USERSETTINGS, 0);
+        SharedPreferences.Editor editor = settings.edit();
+        editor.putString("savedUtterance", utterance);
+        editor.apply();
     }
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 }

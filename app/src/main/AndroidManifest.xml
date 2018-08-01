@@ -80,7 +80,7 @@
                 android:value="com.helpaigrow.WelcomeActivity" />
         </activity>
         <activity
-            android:name=".QuestionsActivity"
+            android:name=".PostTestActivity"
             android:parentActivityName=".WelcomeActivity"
             android:screenOrientation="portrait"
             tools:ignore="UnusedAttribute">

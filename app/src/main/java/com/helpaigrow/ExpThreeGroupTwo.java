@@ -171,6 +171,11 @@ public class ExpThreeGroupTwo extends SpeechActivity {
     }
 
     @Override
+    protected void saveUtterance(String utterance) {
+
+    }
+
+    @Override
     protected void finalizedRecognizedText(String text) {
         recognizedText.setText(text);
         recognizedTextBuffer.add(text);

@@ -29,6 +29,8 @@ import java.util.TimerTask;
 
 public class ResponseServer {
 
+    private String finalUtterance;
+
     // Amazon Polly
     private static final String COGNITO_POOL_ID = "us-east-2:b0d2f207-55ba-4077-8d2a-83cab24695b3";
     private static final Regions MY_REGION = Regions.US_EAST_2;
@@ -184,6 +186,7 @@ public class ResponseServer {
         } catch (Exception e) {
             text = "";
         }
+        finalUtterance = text;
 
         @SuppressLint("DefaultLocale") String query = String.format("conversation_token=%s&message=%s", conversationToken, text);
         return query;
@@ -287,6 +290,7 @@ public class ResponseServer {
                         @Override
                         public void onCompletion(MediaPlayer mp) {
                             mp.release();
+                            activity.saveUtterance(finalUtterance);
                             activity.goToQuestions();
                         }
                     });
