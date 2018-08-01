@@ -180,7 +180,7 @@ public class ResponseServer {
         String text;
         ArrayList<String> messages = getReceivedMessage();
         try {
-            text = TextUtils.join(" ", messages);
+            text = TextUtils.join(". ", messages);
         } catch (Exception e) {
             text = "";
         }
