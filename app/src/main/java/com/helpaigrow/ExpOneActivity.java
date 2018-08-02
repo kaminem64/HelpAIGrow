@@ -142,6 +142,9 @@ public class ExpOneActivity extends SpeechActivity {
             ActivityCompat.requestPermissions(getActivity(), new String[]{Manifest.permission.RECORD_AUDIO}, REQUEST_RECORD_AUDIO_PERMISSION);
         }
         if(!isIceBroken) {
+            try {
+                pauseRecognition(); //Pause the recognition before Amanda gets to talk first. Otherwise on slower internet connection we might have a problem of detecting some words before the conversation starts.
+            } catch (Exception ignore) {}
             responseServer.breakTheIce();
             isIceBroken = true;
         }
