@@ -2,7 +2,6 @@ apply plugin: 'com.android.application'
 apply plugin: "com.google.protobuf"
 
 ext {
-//    supportLibraryVersion = "25.4.0"
     grpcVersion = "1.4.0"
 }
 
@@ -89,7 +88,7 @@ dependencies {
 
 
 task copySecretKey(type: Copy) {
-    def File secretKey = file "$System.env.GOOGLE_APPLICATION_CREDENTIALS"
+    File secretKey = file "$System.env.GOOGLE_APPLICATION_CREDENTIALS"
     from secretKey.getParent()
     include secretKey.getName()
     into "src/main/res/raw"
