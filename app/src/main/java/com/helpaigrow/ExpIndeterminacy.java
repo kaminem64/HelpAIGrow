@@ -203,14 +203,14 @@ public class ExpIndeterminacy extends SpeechActivity {
         switch (commandCode) {
             // do nothing if something is already on/off or set | or just do anything we are asked
             case 100:
+                bulbNumber++;
+                bulbText.setText("Light Bulb " + bulbNumber);
                 if(fulfillment==1){
                     // Turn on the lights;
                     imageView.setImageResource(R.drawable.light_bulb_on);
                     new android.os.Handler().postDelayed(
                             new Runnable() {
                                 public void run() {
-                                    bulbNumber++;
-                                    bulbText.setText("Light Bulb " + bulbNumber);
                                     imageView.setImageResource(R.drawable.light_bulb_off);
                                 }
                             },
