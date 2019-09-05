@@ -231,7 +231,7 @@ public class ExpOneActivity extends SpeechActivity {
     }
 
     @Override
-    public void runCommand(int commandCode, String responseParameter, String nextCommandHintText, boolean hasTriedAllCommands){
+    public void runCommand(int commandCode, int fulfillment, String responseParameter, String nextCommandHintText, boolean hasTriedAllCommands, boolean commandCompleted){
 
     }
     @Override

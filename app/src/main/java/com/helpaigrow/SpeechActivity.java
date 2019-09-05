@@ -38,7 +38,7 @@ public abstract class SpeechActivity extends AppCompatActivity implements Messag
     protected VoiceRecorder mVoiceRecorder;
 
     // Abstract Methods
-    protected abstract void runCommand(int commandCode, String responseParameter, String nextCommandHintText, boolean hasTriedAllCommands);
+    protected abstract void runCommand(int commandCode, int fulfillment, String responseParameter, String nextCommandHintText, boolean hasTriedAllCommands, boolean commandCompleted);
     protected abstract void goToQuestions();
     protected abstract void saveUtterance(String utterance);
     protected abstract void finalizedRecognizedText(String text);

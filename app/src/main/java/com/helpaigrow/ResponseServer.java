@@ -273,7 +273,7 @@ public class ResponseServer {
                                 .withVoiceId(voicePersona)
                                 // Set format to MP3.
                                 .withOutputFormat(OutputFormat.Mp3)
-                                .withTextType("text")
+                                .withTextType("ssml")
                                 .withSampleRate("22050");
                 // Get the presigned URL for synthesized speech audio stream.
                 URL presignedSynthesizeSpeechUrl =
@@ -360,14 +360,18 @@ public class ResponseServer {
                 Log.d("ServerStat", "Got is_finished");
                 int responseCode = response.getInt("response_code");
                 Log.d("ServerStat", "Got response code");
+                int fulfillment = response.getInt("fulfillment");
+                Log.d("ServerStat", "Got fulfillment");
                 if (responseCode != 0) {
+                    boolean commandCompleted = response.getBoolean("command_completed");
+                    Log.d("ServerStat", "Got command_completed");
                     String responseParameter = response.getString("response_parameter");
                     Log.d("ServerStat", "Got response parameter");
                     String nextCommandHintText = response.getString("next_command_hint_text");
                     Log.d("ServerStat", "Got next_command_hint_text");
                     boolean hasTriedAllCommands = response.getBoolean("has_tried_all_commands");
                     Log.d("ServerStat", "Got has_tried_all_commands");
-                    activity.runCommand(responseCode, responseParameter, nextCommandHintText, hasTriedAllCommands);
+                    activity.runCommand(responseCode, fulfillment, responseParameter, nextCommandHintText, hasTriedAllCommands, commandCompleted);
                 }
                 if(!responseText.equals("")) speak(responseText, isFinished);
             } catch (JSONException e) {

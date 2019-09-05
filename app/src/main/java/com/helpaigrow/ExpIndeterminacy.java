@@ -14,13 +14,16 @@ import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.SeekBar;
 import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
+
 import org.json.JSONException;
 import org.json.JSONObject;
+
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -31,17 +34,10 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
 
-public class ExpTwoGroupOneActivity extends SpeechActivity {
+public class ExpIndeterminacy extends SpeechActivity {
 
     protected String responseServerUrl = "http://amandabot.xyz/assistant_response/";
     protected long responseDelay = 1000;
-
-    private Toast toastMessage;
-    private Switch lightsSwitch;
-    private Switch acSwitch;
-    private SeekBar acTemperature;
-    private TextView time;
-    private TextView hintText;
 
     // Settings
     public static final String USERSETTINGS = "PrefsFile";
@@ -59,6 +55,9 @@ public class ExpTwoGroupOneActivity extends SpeechActivity {
     private ProgressBar spinner;
     private TextView loadingWhiteTransparent;
     private Button nextButton;
+    private ImageView imageView;
+    private TextView bulbText;
+    private int bulbNumber = 1;
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     /**
@@ -68,48 +67,32 @@ public class ExpTwoGroupOneActivity extends SpeechActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_exp_two_group_one);
+        setContentView(R.layout.activity_exp_indeterminacy);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
         final SharedPreferences settings = getSharedPreferences(USERSETTINGS, 0);
         final String conversationToken = settings.getString("conversationToken", "");
 
+        imageView = findViewById(R.id.lightBulb);
+        bulbText = findViewById(R.id.bulbText);
+
         microphoneIcon = findViewById(R.id.microphoneButtonE2G1);
 
-        spinner = findViewById(R.id.progressBarE2G1);
+        spinner = findViewById(R.id.progressBarIndeterminacy);
         spinner.setVisibility(View.GONE);
-        loadingWhiteTransparent = findViewById(R.id.loadingWhiteTransparentE2G1);
+        loadingWhiteTransparent = findViewById(R.id.loadingWhiteTransparentIndeterminacy);
         loadingWhiteTransparent.setVisibility(View.GONE);
 
         recognizedText = findViewById(R.id.recognizedTextE2G1);
 
         recognizedTextBuffer = new ArrayList<>();
 
-        lightsSwitch = findViewById(R.id.lightsSwitchE2G1);
-        lightsSwitch.setClickable(false);
-
-        acSwitch = findViewById(R.id.acSwitchE2G1);
-        acSwitch.setClickable(false);
-
-        acTemperature = findViewById(R.id.acTemperatureE2G1);
-        acTemperature.setOnTouchListener(new View.OnTouchListener() {
-            @Override
-            public boolean onTouch(View view, MotionEvent motionEvent) {
-                return true;
-            }
-        });
-
-        time = findViewById(R.id.timeE2G1);
-
-        hintText = findViewById(R.id.hintE2G1);
-
-        nextButton = findViewById(R.id.nextButtonE2G1);
+        nextButton = findViewById(R.id.nextButtonIndeterminacy);
         nextButton.setVisibility(View.INVISIBLE);
         nextButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 @SuppressLint("DefaultLocale") String query = String.format("conversation_token=%s&message=", conversationToken);
-//                Log.d("conversationToken", query);
                 new FetchResponse().execute(query);
             }
         });
@@ -125,7 +108,7 @@ public class ExpTwoGroupOneActivity extends SpeechActivity {
     @Override
     public void onBackPressed() {
         onStop();
-        Intent goBackIntent = new Intent(ExpTwoGroupOneActivity.this, WelcomeActivity.class);
+        Intent goBackIntent = new Intent(ExpIndeterminacy.this, WelcomeActivity.class);
         goBackIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
         startActivity(goBackIntent);
     }
@@ -175,16 +158,10 @@ public class ExpTwoGroupOneActivity extends SpeechActivity {
         unBindSpeechService();
     }
 
-//    @Override
-//    protected void onDestroy() {
-//        super.onDestroy();
-//        unBindSpeechService();
-//    }
-
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     @Override
     protected SpeechActivity getActivity() {
-        return ExpTwoGroupOneActivity.this;
+        return ExpIndeterminacy.this;
     }
 
     @Override
@@ -212,7 +189,7 @@ public class ExpTwoGroupOneActivity extends SpeechActivity {
 
     @Override
     public void goToQuestions(){
-        startActivity(new Intent(ExpTwoGroupOneActivity.this, PostTestActivity.class));
+        startActivity(new Intent(ExpIndeterminacy.this, PostTestActivity.class));
     }
 
     @Override
@@ -222,53 +199,27 @@ public class ExpTwoGroupOneActivity extends SpeechActivity {
 
     public void runCommand(int commandCode, int fulfillment, String responseParameter, String nextCommandHintText, boolean hasTriedAllCommands, boolean commandCompleted){
         showStatus(false);
-        hintText.setText(nextCommandHintText);
-        if(hasTriedAllCommands){nextButton.setVisibility(View.VISIBLE);}
+        if(commandCompleted){nextButton.setVisibility(View.VISIBLE);}
         switch (commandCode) {
             // do nothing if something is already on/off or set | or just do anything we are asked
             case 100:
-                // Turn on the lights;
-                lightsSwitch.setChecked(true);
-                if (toastMessage!= null) toastMessage.cancel();
-                toastMessage = Toast.makeText(ExpTwoGroupOneActivity.this, "Lights are on", Toast.LENGTH_SHORT);
-                toastMessage.show();
+                if(fulfillment==1){
+                    // Turn on the lights;
+                    imageView.setImageResource(R.drawable.light_bulb_on);
+                    new android.os.Handler().postDelayed(
+                            new Runnable() {
+                                public void run() {
+                                    bulbNumber++;
+                                    bulbText.setText("Light Bulb " + bulbNumber);
+                                    imageView.setImageResource(R.drawable.light_bulb_off);
+                                }
+                            },
+                            2000);
+                }
                 break;
             case 101:
                 // Turn off the lights
-                lightsSwitch.setChecked(false);
-                if (toastMessage!= null) toastMessage.cancel();
-                toastMessage = Toast.makeText(ExpTwoGroupOneActivity.this, "Lights are off", Toast.LENGTH_SHORT);
-                toastMessage.show();
-                break;
-            case 200:
-                // Turn on AC;
-                acSwitch.setChecked(true);
-                if (toastMessage!= null) toastMessage.cancel();
-                toastMessage = Toast.makeText(ExpTwoGroupOneActivity.this, "AC is on", Toast.LENGTH_SHORT);
-                toastMessage.show();
-                break;
-            case 201:
-                // Turn off AC;
-                acSwitch.setChecked(false);
-                if (toastMessage!= null) toastMessage.cancel();
-                toastMessage = Toast.makeText(ExpTwoGroupOneActivity.this, "AC is off", Toast.LENGTH_SHORT);
-                toastMessage.show();
-                break;
-            case 300:
-                // Set the temp to X degrees;
-                acTemperature.setProgress(Integer.parseInt(responseParameter));
-                if (toastMessage!= null) toastMessage.cancel();
-                String message = "Temperature is set to: " + responseParameter + "°F";
-                toastMessage = Toast.makeText(ExpTwoGroupOneActivity.this, message, Toast.LENGTH_SHORT);
-                toastMessage.show();
-                break;
-            case 400:
-                // Set the alarm
-                time.setText(responseParameter);
-                if (toastMessage!= null) toastMessage.cancel();
-                String alarmMessage = "Alarm is set for: " + responseParameter;
-                toastMessage = Toast.makeText(ExpTwoGroupOneActivity.this, alarmMessage, Toast.LENGTH_SHORT);
-                toastMessage.show();
+                //lightsSwitch.setChecked(false);
                 break;
             default:
                 break;
@@ -348,12 +299,12 @@ public class ExpTwoGroupOneActivity extends SpeechActivity {
                 if (success) {
                     goToQuestions();
                 } else {
-                    Toast.makeText(ExpTwoGroupOneActivity.this, "Server error!\nPlease try again later!", Toast.LENGTH_LONG).show();
+                    Toast.makeText(ExpIndeterminacy.this, "Server error!\nPlease try again later!", Toast.LENGTH_LONG).show();
                 }
             } catch (JSONException e) {
                 e.printStackTrace();
                 Log.d("ServerStat", e.toString());
-                Toast.makeText(ExpTwoGroupOneActivity.this, "Server error!\nPlease try again later!!!", Toast.LENGTH_LONG).show();
+                Toast.makeText(ExpIndeterminacy.this, "Server error!\nPlease try again later!!!", Toast.LENGTH_LONG).show();
             }
 
         }

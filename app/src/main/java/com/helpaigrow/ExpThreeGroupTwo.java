@@ -161,7 +161,7 @@ public class ExpThreeGroupTwo extends SpeechActivity {
     }
 
         @Override
-    protected void runCommand(int commandCode, String responseParameter, String nextCommandHintText, boolean hasTriedAllCommands) {
+    protected void runCommand(int commandCode, int fulfillment, String responseParameter, String nextCommandHintText, boolean hasTriedAllCommands, boolean commandCompleted) {
 
     }
 

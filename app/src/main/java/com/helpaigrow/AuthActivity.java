@@ -153,47 +153,43 @@ public class AuthActivity extends AppCompatActivity {
                 editor.apply();
                 String text1;
                 if(success){
-//                    authStatusText.setText(R.string.authSuccess);
-//                    authStatusImage.setImageResource(R.drawable.checkmark);
-//                    proceedButton.setOnClickListener(new View.OnClickListener() {
-//                        @Override
-//                        public void onClick(View view) {
-                        switch(appExperimentCode){
-                            case 0:
-                                goToNextPage[0] = new Intent(AuthActivity.this, WelcomeActivity.class);
-                                break;
-                            case 10:
-                                goToNextPage[0] = new Intent(AuthActivity.this, ConsentFormActivity.class);
-                                goToNextPage[0].putExtra("experimentClass","com.helpaigrow.ExpOneActivity");
-                                break;
-                            case 11:
-                                goToNextPage[0] = new Intent(AuthActivity.this, ConsentFormActivity.class);
-                                goToNextPage[0].putExtra("experimentClass","com.helpaigrow.ExpOneActivity");
-                                break;
-                            case 12:
-                                goToNextPage[0] = new Intent(AuthActivity.this, ConsentFormActivity.class);
-                                goToNextPage[0].putExtra("experimentClass","com.helpaigrow.ExpOneActivity");
-                                break;
-                            case 20:
-                                goToNextPage[0] = new Intent(AuthActivity.this, ConsentFormActivity.class);
-                                goToNextPage[0].putExtra("experimentClass","com.helpaigrow.ExpTwoGroupOneActivity");
-                                break;
-                            case 21:
-                                goToNextPage[0] = new Intent(AuthActivity.this, ConsentFormActivity.class);
-                                goToNextPage[0].putExtra("experimentClass","com.helpaigrow.ExpTwoGroupTwoActivity");
-                                break;
-                            case 30:
-                                goToNextPage[0] = new Intent(AuthActivity.this, ConsentFormActivity.class);
-                                goToNextPage[0].putExtra("experimentClass","com.helpaigrow.ExpThreeGroupTwo");
-                                break;
-                            default:
-                                goToNextPage[0] = new Intent(AuthActivity.this, WelcomeActivity.class);
-                                break;
-                        }
-                            startActivity(goToNextPage[0]);
-//                        }
-//                    });
-//                    proceedButton.setVisibility(View.VISIBLE);
+                    switch(appExperimentCode){
+                        case 0:
+                            goToNextPage[0] = new Intent(AuthActivity.this, WelcomeActivity.class);
+                            break;
+                        case 10:
+                            goToNextPage[0] = new Intent(AuthActivity.this, ConsentFormActivity.class);
+                            goToNextPage[0].putExtra("experimentClass","com.helpaigrow.ExpOneActivity");
+                            break;
+                        case 11:
+                            goToNextPage[0] = new Intent(AuthActivity.this, ConsentFormActivity.class);
+                            goToNextPage[0].putExtra("experimentClass","com.helpaigrow.ExpOneActivity");
+                            break;
+                        case 12:
+                            goToNextPage[0] = new Intent(AuthActivity.this, ConsentFormActivity.class);
+                            goToNextPage[0].putExtra("experimentClass","com.helpaigrow.ExpOneActivity");
+                            break;
+                        case 20:
+                            goToNextPage[0] = new Intent(AuthActivity.this, ConsentFormActivity.class);
+                            goToNextPage[0].putExtra("experimentClass","com.helpaigrow.ExpTwoGroupOneActivity");
+                            break;
+                        case 21:
+                            goToNextPage[0] = new Intent(AuthActivity.this, ConsentFormActivity.class);
+                            goToNextPage[0].putExtra("experimentClass","com.helpaigrow.ExpTwoGroupTwoActivity");
+                            break;
+                        case 30:
+                            goToNextPage[0] = new Intent(AuthActivity.this, ConsentFormActivity.class);
+                            goToNextPage[0].putExtra("experimentClass","com.helpaigrow.ExpThreeGroupTwo");
+                            break;
+                        case 40:
+                            goToNextPage[0] = new Intent(AuthActivity.this, ConsentFormActivity.class);
+                            goToNextPage[0].putExtra("experimentClass","com.helpaigrow.ExpIndeterminacy");
+                            break;
+                        default:
+                            goToNextPage[0] = new Intent(AuthActivity.this, WelcomeActivity.class);
+                            break;
+                    }
+                    startActivity(goToNextPage[0]);
                 } else if (response.getBoolean("experiment_id_error")) {
                     Toast.makeText(AuthActivity.this, "Wrong experiment ID!", Toast.LENGTH_SHORT).show();
                     onBackPressed();

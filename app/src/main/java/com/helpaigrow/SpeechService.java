@@ -192,9 +192,7 @@ public class SpeechService extends Service {
     public boolean isServiceReady(){
         if(mApi != null){
             final ManagedChannel channel = (ManagedChannel) mApi.getChannel();
-            if (channel != null && !channel.isShutdown()) {
-                return true;
-            }
+            return channel != null && !channel.isShutdown();
         }
         return false;
     }
@@ -372,7 +370,7 @@ public class SpeechService extends Service {
                     Log.i("SpeechService", "AccessTokenTask: return token");
                     return token;
                 } else {
-                    Log.e(TAG, "Failed to obtain access token.");
+                    Log.e(TAG, "0");
                 }
             } catch (JSONException e) {
                 e.printStackTrace();
