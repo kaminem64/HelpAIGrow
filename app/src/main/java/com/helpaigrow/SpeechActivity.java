@@ -12,6 +12,10 @@ import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
 import android.util.Log;
 
+import java.io.BufferedOutputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+
 public abstract class SpeechActivity extends AppCompatActivity implements MessageDialogFragment.Listener {
 
     // Constants
@@ -36,6 +40,8 @@ public abstract class SpeechActivity extends AppCompatActivity implements Messag
 
     //Voice Recorder
     protected VoiceRecorder mVoiceRecorder;
+    private BufferedOutputStream os;
+
 
     // Abstract Methods
     protected abstract void runCommand(int commandCode, int fulfillment, String responseParameter, String nextCommandHintText, boolean hasTriedAllCommands, boolean commandCompleted);
@@ -51,6 +57,23 @@ public abstract class SpeechActivity extends AppCompatActivity implements Messag
     protected abstract long getResponseDelay();
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    protected BufferedOutputStream setOs() {
+        String filePath = getExternalCacheDir().getAbsolutePath();
+        filePath += "/audiorecordtest" + (int)(Math.random() * (1000000 + 1)) + ".3gp";
+        try {
+            os = new BufferedOutputStream(new FileOutputStream(filePath));
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+            os = null;
+        }
+        return os;
+    }
+
+    protected BufferedOutputStream getOs() {
+        return os;
+    }
+
 
     /**
      * Voice Recorder
@@ -70,7 +93,7 @@ public abstract class SpeechActivity extends AppCompatActivity implements Messag
         public void onVoice(byte[] data, int size) {
 //            Log.i("SpeechActivity", "onVoice()");
             if (mSpeechService != null) {
-                mSpeechService.recognize(data, size);
+                mSpeechService.recognize(data, size, os);
             }
         }
 
@@ -135,7 +158,14 @@ public abstract class SpeechActivity extends AppCompatActivity implements Messag
             stopVoiceRecorder();
         }
         catch (Exception e) {
-            Log.d("pauseRecognition", "SpeechService is already stopped.");
+            Log.d("pauseRecognition", "stopVoiceRecorder() failed.");
+        }
+        try {
+            // Stop listening to voice
+            mSpeechService.removeListener(mSpeechServiceListener);
+        }
+        catch (Exception e) {
+            Log.d("pauseRecognition", "mSpeechService.removeListener(mSpeechServiceListener) failed.");
         }
         isSpeechServiceRunning = false;
         isTalking = true;
@@ -146,7 +176,13 @@ public abstract class SpeechActivity extends AppCompatActivity implements Messag
             // Start listening to voices
             startVoiceRecorder();
         } catch (Exception e) {
-            Log.d("resumeRecognition", "SpeechService is already running.");
+            Log.d("resumeRecognition", "startVoiceRecorder() failed.");
+        }
+        try {
+            // Start listening to voices
+            mSpeechService.addListener(mSpeechServiceListener);
+        } catch (Exception e) {
+            Log.d("resumeRecognition", "mSpeechService.addListener(mSpeechServiceListener); failed.");
         }
         isSpeechServiceRunning = true;
         isTalking = false;
@@ -162,7 +198,7 @@ public abstract class SpeechActivity extends AppCompatActivity implements Messag
         @Override
         public void onSpeechRecognized(final String text, final boolean isFinal) {
             if (isFinal) {
-                mVoiceRecorder.dismiss();
+                if (mVoiceRecorder != null) {mVoiceRecorder.dismiss();}
             }
             if (!TextUtils.isEmpty(text)) {runOnUiThread(new Runnable() { //mText != null &&
                 @Override

@@ -6,23 +6,28 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AlertDialog;
+import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.ImageButton;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+
+import java.io.BufferedOutputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.util.ArrayList;
 import java.util.Objects;
-import java.util.UUID;
 
 public class ExpOneActivity extends SpeechActivity {
 
     private boolean firstTimeShown = true;
 
     protected String responseServerUrl = "http://amandabot.xyz/response/";
-    protected long responseDelay = 3000;
+    protected long responseDelay = 2000;
 
     private final String WAITING_FOR_SERVER = "Thinking ...";
     private final String LISTENING_MESSAGE = "Listening ...";
@@ -37,6 +42,7 @@ public class ExpOneActivity extends SpeechActivity {
     private ProgressBar spinner;
     private TextView loadingWhiteTransparent;
 
+
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     /**
      * Creating the activity page
@@ -50,7 +56,6 @@ public class ExpOneActivity extends SpeechActivity {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
             Objects.requireNonNull(getSupportActionBar()).setDisplayHomeAsUpEnabled(true);
         }
-
 
         microphoneIcon = findViewById(R.id.microphoneButtonExp1);
 
@@ -69,7 +74,6 @@ public class ExpOneActivity extends SpeechActivity {
         responseServer.setOnUtteranceStart(pauseRecognitionRunnable);
         responseServer.setOnUtteranceFinished(resumeRecognitionRunnable);
     }
-
 
     DialogInterface.OnClickListener dialogClickListener = new DialogInterface.OnClickListener() {
         @Override
@@ -199,6 +203,7 @@ public class ExpOneActivity extends SpeechActivity {
                 responseServer.killSilenceTimer();
                 isSilenceTimerRunning = false;
             } catch (Exception ignored) {
+                Log.d("Location", "unFinalizedRecognizedText. Failed to kill Silence Timer!");
             }
         }
         recognizedText.setText(text);

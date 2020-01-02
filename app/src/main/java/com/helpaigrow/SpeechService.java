@@ -30,6 +30,7 @@ import com.google.protobuf.ByteString;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -281,14 +282,37 @@ public class SpeechService extends Service {
      * @param data The audio data.
      * @param size The number of elements that are actually relevant in the {@code data}.
      */
+    public void recognize(byte[] data, int size, BufferedOutputStream os) {
+        if (mRequestObserver == null) {
+            return;
+        }
+        // Call the streaming recognition API
+        try {
+            mRequestObserver.onNext(StreamingRecognizeRequest.newBuilder()
+                    .setAudioContent(ByteString.copyFrom(data, 0, size))
+                    .build());
+        } catch (Exception e) {
+            Log.d("recognize", "recognize() failed.");
+        }
+        try {
+            os.write(data, 0, size);
+        } catch (Exception e) {
+            Log.d("recognize", "recognize() file failed. " + e.toString());
+        }
+    }
+
     public void recognize(byte[] data, int size) {
         if (mRequestObserver == null) {
             return;
         }
         // Call the streaming recognition API
-        mRequestObserver.onNext(StreamingRecognizeRequest.newBuilder()
-                .setAudioContent(ByteString.copyFrom(data, 0, size))
-                .build());
+        try {
+            mRequestObserver.onNext(StreamingRecognizeRequest.newBuilder()
+                    .setAudioContent(ByteString.copyFrom(data, 0, size))
+                    .build());
+        } catch (Exception e) {
+            Log.d("recognize", "recognize() failed.");
+        }
     }
 
     /**
@@ -338,42 +362,56 @@ public class SpeechService extends Service {
             }
 
             // Using our own server to authenticate user's access to Google Speech API
-            StringBuilder result = new StringBuilder();
-            URL url;
+//            StringBuilder result = new StringBuilder();
+//            URL url;
+//            try {
+//                url = new URL("http://amandabot.xyz/speech_access_token/?conversation_token="+conversationToken);
+//                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+//                InputStream inputStream = conn.getInputStream();
+//                BufferedReader in = new BufferedReader(new InputStreamReader(inputStream, "UTF-8"));
+//                for (int c; (c = in.read()) >= 0;)
+//                    result.append((char)c);
+//            } catch (MalformedURLException e) {
+//                e.printStackTrace();
+//            } catch (UnsupportedEncodingException e) {
+//                e.printStackTrace();
+//            } catch (IOException e) {
+//                e.printStackTrace();
+//            }
+//            try {
+//                Log.d(TAG, result.toString());
+//                JSONObject resultJSON = new JSONObject(result.toString());
+//                JSONObject response = resultJSON.getJSONObject("response");
+//                boolean success = response.getBoolean("success");
+//                if (success) {
+//                    String accessToken = response.getString("access_token");
+//                    Date expiresIn = new Date(Long.parseLong(response.getString("expires_in")));
+//                    final AccessToken token = new AccessToken(accessToken, expiresIn);
+//                    prefs.edit()
+//                            .putString(PREF_ACCESS_TOKEN_VALUE, token.getTokenValue())
+//                            .putLong(PREF_ACCESS_TOKEN_EXPIRATION_TIME, token.getExpirationTime().getTime())
+//                            .apply();
+//                    Log.i("SpeechService", "AccessTokenTask: return token");
+//                    return token;
+//                } else {
+//                    Log.e(TAG, "0");
+//                }
+//            } catch (JSONException e) {
+//                e.printStackTrace();
+//            }
+            final InputStream stream = getResources().openRawResource(R.raw.credential);
             try {
-                url = new URL("http://amandabot.xyz/speech_access_token/?conversation_token="+conversationToken);
-                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-                InputStream inputStream = conn.getInputStream();
-                BufferedReader in = new BufferedReader(new InputStreamReader(inputStream, "UTF-8"));
-                for (int c; (c = in.read()) >= 0;)
-                    result.append((char)c);
-            } catch (MalformedURLException e) {
-                e.printStackTrace();
-            } catch (UnsupportedEncodingException e) {
-                e.printStackTrace();
+                final GoogleCredentials credentials = GoogleCredentials.fromStream(stream)
+                        .createScoped(SCOPE);
+                final AccessToken token = credentials.refreshAccessToken();
+                prefs.edit()
+                        .putString(PREF_ACCESS_TOKEN_VALUE, token.getTokenValue())
+                        .putLong(PREF_ACCESS_TOKEN_EXPIRATION_TIME,
+                                token.getExpirationTime().getTime())
+                        .apply();
+                return token;
             } catch (IOException e) {
-                e.printStackTrace();
-            }
-            try {
-                Log.d(TAG, result.toString());
-                JSONObject resultJSON = new JSONObject(result.toString());
-                JSONObject response = resultJSON.getJSONObject("response");
-                boolean success = response.getBoolean("success");
-                if (success) {
-                    String accessToken = response.getString("access_token");
-                    Date expiresIn = new Date(Long.parseLong(response.getString("expires_in")));
-                    final AccessToken token = new AccessToken(accessToken, expiresIn);
-                    prefs.edit()
-                            .putString(PREF_ACCESS_TOKEN_VALUE, token.getTokenValue())
-                            .putLong(PREF_ACCESS_TOKEN_EXPIRATION_TIME, token.getExpirationTime().getTime())
-                            .apply();
-                    Log.i("SpeechService", "AccessTokenTask: return token");
-                    return token;
-                } else {
-                    Log.e(TAG, "0");
-                }
-            } catch (JSONException e) {
-                e.printStackTrace();
+                Log.e(TAG, "Failed to obtain access token.", e);
             }
             Log.i("SpeechService", "AccessTokenTask: return null");
             return null;

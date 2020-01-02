@@ -3,15 +3,18 @@ package com.helpaigrow;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.media.AudioAttributes;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.text.TextUtils;
 import android.util.Log;
 import com.amazonaws.auth.CognitoCachingCredentialsProvider;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.polly.AmazonPollyPresigningClient;
 import com.amazonaws.services.polly.model.OutputFormat;
+import com.amazonaws.services.polly.model.Engine;
 import com.amazonaws.services.polly.model.SynthesizeSpeechPresignRequest;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -32,8 +35,8 @@ public class ResponseServer {
     private String finalUtterance;
 
     // Amazon Polly
-    private static final String COGNITO_POOL_ID = "us-east-2:b0d2f207-55ba-4077-8d2a-83cab24695b3";
-    private static final Regions MY_REGION = Regions.US_EAST_2;
+    private static final String COGNITO_POOL_ID = "us-east-1:b0f94da1-d234-47cb-b191-3b525641ae79";
+    private static final Regions MY_REGION = Regions.US_EAST_1;
     private CognitoCachingCredentialsProvider credentialsProvider;
     private AmazonPollyPresigningClient client;
     private MediaPlayer mediaPlayer;
@@ -104,12 +107,12 @@ public class ResponseServer {
         this.onUtteranceFinishedCallback.run();
     }
 
-    private void resumeRecognition() {
-        activity.resumeRecognition();
-    }
-    private void pauseRecognition() {
-        activity.pauseRecognition();
-    }
+//    private void resumeRecognition() {
+//        activity.resumeRecognition();
+//    }
+//    private void pauseRecognition() {
+//        activity.pauseRecognition();
+//    }
 
     private void setupNewMediaPlayer() {
         mediaPlayer = new MediaPlayer();
@@ -130,6 +133,7 @@ public class ResponseServer {
         mediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
             @Override
             public void onPrepared(MediaPlayer mp) {
+                // It seems to be too late to call onUtterancesStart() here. Will move it to SilentTimer
                 ResponseServer.this.onUtteranceStart();
                 mp.start();
             }
@@ -157,11 +161,16 @@ public class ResponseServer {
      * @param text The text to be spoken
      * @param isFinished The status
      */
+    public void speak(String text, boolean isFinished, boolean isSSML, boolean isNeural, String region) {
+        speakingAgent = new Speak(text, isFinished, isSSML, isNeural, region);
+        speakingAgent.execute();
+        this.flushReceivedMessage();
+    }
+
     public void speak(String text, boolean isFinished) {
         speakingAgent = new Speak(text, isFinished);
         speakingAgent.execute();
         this.flushReceivedMessage();
-
     }
 
     public void stopSpeaking() {
@@ -190,7 +199,6 @@ public class ResponseServer {
 
         @SuppressLint("DefaultLocale") String query = String.format("conversation_token=%s&message=%s", conversationToken, text);
         return query;
-
     }
 
     public void respond() {
@@ -206,17 +214,24 @@ public class ResponseServer {
      */
     public void startSilenceTimer() {
         Log.d("Location", "startSilenceTimer");
+        if (this.timer != null) {
+            this.timer.cancel();
+            this.timer = null;
+        }
         if (this.timerTask != null) {
             this.timerTask.cancel();
             this.timerTask = null;
         }
-        this.timer = new Timer();
         this.timerTask = new TimerTask() {
             @Override
             public void run() {
+                Log.d("Location", "silenceTimerDone");
+                // Just to double-check that speech recognition is killed
+                ResponseServer.this.onUtteranceStart();
                 respond();
             }
         };
+        this.timer = new Timer();
         this.timer.schedule(this.timerTask, responseDelay);
     }
 
@@ -255,36 +270,82 @@ public class ResponseServer {
     private class Speak extends AsyncTask<Void, Void, Void> {
         String textToRead;
         boolean isFinished;
+        boolean isSSML;
+        boolean isNeural;
+        String region;
+        String textType;
+        String engine;
 
         Speak(String textToRead, boolean isFinished) {
             this.textToRead = textToRead;
             this.isFinished = isFinished;
+            this.isSSML = false;
+            this.isNeural = false;
+            this.region = "NA";
+            textType = "text";
+            engine = "standard";
+
+        }
+
+        Speak(String textToRead, boolean isFinished, boolean isSSML, boolean isNeural, String region) {
+            this.isFinished = isFinished;
+            this.isSSML = isSSML;
+            this.isNeural = isNeural;
+            this.region = region;
+            if (isNeural) {
+                engine = "neural";
+                textToRead = "<amazon:domain name=\"conversational\">" + textToRead + "</amazon:domain>";
+            } else {
+                engine = "standard";
+            }
+            if (isSSML) {
+                textType = "ssml";
+                textToRead = "<speak>" + textToRead + "</speak>";
+            } else {
+                textType = "text";
+            }
+            this.textToRead = textToRead;
         }
 
         @Override
         protected Void doInBackground(Void... voids) {
             try {
+                try {
+                    activity.getOs().close();
+                }
+                catch (Exception e) {
+                    activity.setOs();
+                }
                 // Create speech synthesis request.
                 SynthesizeSpeechPresignRequest synthesizeSpeechPresignRequest =
                         new SynthesizeSpeechPresignRequest()
                                 // Set text to synthesize.
-                                .withText(textToRead)
+                                .withText(this.textToRead)
                                 // Set voice selected by the user.
                                 .withVoiceId(voicePersona)
                                 // Set format to MP3.
                                 .withOutputFormat(OutputFormat.Mp3)
-                                .withTextType("ssml")
-                                .withSampleRate("22050");
+                                .withTextType(this.textType)
+                                .withEngine(Engine.fromValue(this.engine));
+//                                .withSampleRate("22050");
                 // Get the presigned URL for synthesized speech audio stream.
                 URL presignedSynthesizeSpeechUrl =
                         client.getPresignedSynthesizeSpeechUrl(synthesizeSpeechPresignRequest);
-                Log.i("Polly", "Playing speech from presigned URL: " + presignedSynthesizeSpeechUrl);
+                Log.i("Polly", "Received speech presigned URL: " + presignedSynthesizeSpeechUrl);
 
                 // Create a media player to play the synthesized audio stream.
                 if (mediaPlayer.isPlaying()) {
                     setupNewMediaPlayer();
                 }
-                mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                    mediaPlayer.setAudioAttributes(
+                            new AudioAttributes
+                                    .Builder()
+                                    .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                                    .build());
+                } else {
+                    mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
+                }
                 if(this.isFinished) {
                     mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
                         @Override
@@ -358,6 +419,12 @@ public class ResponseServer {
                 Log.d("ServerStat", "Got sentence");
                 boolean isFinished = response.getBoolean("is_finished");
                 Log.d("ServerStat", "Got is_finished");
+                boolean isSSML = response.getBoolean("is_ssml");
+                Log.d("ServerStat", "Got is_ssml");
+                boolean isNeural = response.getBoolean("is_neural");
+                Log.d("ServerStat", "Got is_neural");
+                String region = response.getString("region");
+                Log.d("ServerStat", "Got region");
                 int responseCode = response.getInt("response_code");
                 Log.d("ServerStat", "Got response code");
                 int fulfillment = response.getInt("fulfillment");
@@ -373,7 +440,7 @@ public class ResponseServer {
                     Log.d("ServerStat", "Got has_tried_all_commands");
                     activity.runCommand(responseCode, fulfillment, responseParameter, nextCommandHintText, hasTriedAllCommands, commandCompleted);
                 }
-                if(!responseText.equals("")) speak(responseText, isFinished);
+                if(!responseText.equals("")) speak(responseText, isFinished, isSSML, isNeural, region);
             } catch (JSONException e) {
                 e.printStackTrace();
                 Log.d("ServerStat", e.toString());
