@@ -387,6 +387,9 @@ public class ResponseServer {
                 conn.setRequestMethod("POST");
                 conn.setDoInput(true);
                 conn.setDoOutput(true);
+//                conn.setUseCaches(false); // Don't use a Cached Copy
+//                conn.setRequestProperty("Connection", "Keep-Alive");
+//                conn.setRequestProperty("Content-Type", "multipart/form-data;boundary=" + "dhjsdkajshdakj");
                 OutputStream os = conn.getOutputStream();
                 DataOutputStream writer = new DataOutputStream(os);
                 writer.writeBytes(urlParameters);

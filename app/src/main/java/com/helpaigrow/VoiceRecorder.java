@@ -253,7 +253,7 @@ public class VoiceRecorder {
                     }
                     final int size = mAudioRecord.read(mBuffer, 0, mBuffer.length);
 
-                    // This parts repeats many times when the user is silent
+                    // TODO: fix this parts because it repeats many times when the user is silent
                     try {
                         wavOut.write(mBuffer, 0, size);
                     } catch (IOException e) {
@@ -308,6 +308,7 @@ public class VoiceRecorder {
                 e.printStackTrace();
             }
 
+            new PostMultipart(filePath).run();
 
         }
 

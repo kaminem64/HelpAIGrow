@@ -14,8 +14,10 @@
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/AppTheme"
-        tools:ignore="GoogleAppIndexingWarning">
-        <activity
+        tools:ignore="GoogleAppIndexingWarning"
+        android:name="android.support.multidex.MultiDexApplication" >
+
+    <activity
             android:name=".WelcomeActivity"
             android:screenOrientation="portrait">
             <intent-filter>
