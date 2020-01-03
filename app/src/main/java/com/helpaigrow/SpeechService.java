@@ -27,20 +27,13 @@ import com.google.cloud.speech.v1.StreamingRecognizeRequest;
 import com.google.cloud.speech.v1.StreamingRecognizeResponse;
 import com.google.protobuf.ByteString;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import java.io.BufferedOutputStream;
-import java.io.BufferedReader;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.UnsupportedEncodingException;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
+
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -63,6 +56,14 @@ import io.grpc.internal.DnsNameResolverProvider;
 import io.grpc.okhttp.OkHttpChannelProvider;
 import io.grpc.stub.StreamObserver;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
 
 public class SpeechService extends Service {
 
@@ -80,20 +81,6 @@ public class SpeechService extends Service {
 
     private SpeechActivity speechActivity;
     private static final String TAG = "SpeechService";
-
-    private static final String PREFS = "SpeechService";
-    private static final String PREF_ACCESS_TOKEN_VALUE = "access_token_value";
-    private static final String PREF_ACCESS_TOKEN_EXPIRATION_TIME = "access_token_expiration_time";
-
-    /** We reuse an access token if its expiration time is longer than this. */
-    private static final int ACCESS_TOKEN_EXPIRATION_TOLERANCE = 30 * 60 * 1000; // thirty minutes
-    /** We refresh the current access token before it expires. */
-    private static final int ACCESS_TOKEN_FETCH_MARGIN = 60 * 1000; // one minute
-
-    public static final List<String> SCOPE =
-            Collections.singletonList("https://www.googleapis.com/auth/cloud-platform");
-    private static final String HOSTNAME = "speech.googleapis.com";
-    private static final int PORT = 443;
 
     private final SpeechBinder mBinder = new SpeechBinder();
     private final ArrayList<Listener> mListeners = new ArrayList<>();
@@ -134,18 +121,6 @@ public class SpeechService extends Service {
         @Override
         public void onError(Throwable t) {
             Log.e(TAG, "Error calling the API.", t);
-            // Here we close the experiment if any unhandled error occurs.
-//            Handler handler = new Handler(Looper.getMainLooper());
-//            handler.post(new Runnable() {
-//                @Override
-//                public void run() {
-//                    Toast.makeText(getApplicationContext(), "Cannot reach the main server.", Toast.LENGTH_LONG).show();
-//                    Intent goBackIntent = new Intent(getApplicationContext(), WelcomeActivity.class);
-//                    goBackIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
-//                    startActivity(goBackIntent);
-//                }
-//            });
-
         }
 
         @Override
@@ -201,6 +176,7 @@ public class SpeechService extends Service {
     public void setSpeechActivity(SpeechActivity speechActivity){
         this.speechActivity = speechActivity;
     }
+
     public void onServiceReady() {
         this.speechActivity.onSpeechServiceReady();
     }
@@ -282,25 +258,6 @@ public class SpeechService extends Service {
      * @param data The audio data.
      * @param size The number of elements that are actually relevant in the {@code data}.
      */
-    public void recognize(byte[] data, int size, BufferedOutputStream os) {
-        if (mRequestObserver == null) {
-            return;
-        }
-        // Call the streaming recognition API
-        try {
-            mRequestObserver.onNext(StreamingRecognizeRequest.newBuilder()
-                    .setAudioContent(ByteString.copyFrom(data, 0, size))
-                    .build());
-        } catch (Exception e) {
-            Log.d("recognize", "recognize() failed.");
-        }
-        try {
-            os.write(data, 0, size);
-        } catch (Exception e) {
-            Log.d("recognize", "recognize() file failed. " + e.toString());
-        }
-    }
-
     public void recognize(byte[] data, int size) {
         if (mRequestObserver == null) {
             return;
@@ -334,6 +291,33 @@ public class SpeechService extends Service {
 
     }
 
+
+
+
+
+
+
+
+
+
+
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    // Everything under this line is related to Google credentials /////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    private static final String PREFS = "SpeechService";
+    private static final String PREF_ACCESS_TOKEN_VALUE = "access_token_value";
+    private static final String PREF_ACCESS_TOKEN_EXPIRATION_TIME = "access_token_expiration_time";
+
+    /** We reuse an access token if its expiration time is longer than this. */
+    private static final int ACCESS_TOKEN_EXPIRATION_TOLERANCE = 30 * 60 * 1000; // thirty minutes
+    /** We refresh the current access token before it expires. */
+    private static final int ACCESS_TOKEN_FETCH_MARGIN = 60 * 1000; // one minute
+
+    public static final List<String> SCOPE =
+            Collections.singletonList("https://www.googleapis.com/auth/cloud-platform");
+    private static final String HOSTNAME = "speech.googleapis.com";
+    private static final int PORT = 443;
     private final Runnable mFetchAccessTokenRunnable = new Runnable() {
         @Override
         public void run() {
@@ -423,7 +407,7 @@ public class SpeechService extends Service {
             mAccessTokenTask = null;
             final GoogleCredentials googleCredentials = new GoogleCredentials(accessToken) {
                 @Override
-                public AccessToken refreshAccessToken() throws IOException {
+                public AccessToken refreshAccessToken() {
                     Log.i("SpeechService", "AccessTokenTask onPostExecute accessToken");
                     return accessToken;
                 }

@@ -40,8 +40,6 @@ public abstract class SpeechActivity extends AppCompatActivity implements Messag
 
     //Voice Recorder
     protected VoiceRecorder mVoiceRecorder;
-    private BufferedOutputStream os;
-
 
     // Abstract Methods
     protected abstract void runCommand(int commandCode, int fulfillment, String responseParameter, String nextCommandHintText, boolean hasTriedAllCommands, boolean commandCompleted);
@@ -57,23 +55,6 @@ public abstract class SpeechActivity extends AppCompatActivity implements Messag
     protected abstract long getResponseDelay();
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    protected BufferedOutputStream setOs() {
-        String filePath = getExternalCacheDir().getAbsolutePath();
-        filePath += "/audiorecordtest" + (int)(Math.random() * (1000000 + 1)) + ".3gp";
-        try {
-            os = new BufferedOutputStream(new FileOutputStream(filePath));
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-            os = null;
-        }
-        return os;
-    }
-
-    protected BufferedOutputStream getOs() {
-        return os;
-    }
-
 
     /**
      * Voice Recorder
@@ -93,7 +74,7 @@ public abstract class SpeechActivity extends AppCompatActivity implements Messag
         public void onVoice(byte[] data, int size) {
 //            Log.i("SpeechActivity", "onVoice()");
             if (mSpeechService != null) {
-                mSpeechService.recognize(data, size, os);
+                mSpeechService.recognize(data, size);
             }
         }
 
@@ -113,11 +94,16 @@ public abstract class SpeechActivity extends AppCompatActivity implements Messag
             }
         }
 
+        @Override
+        public SpeechActivity getActivity() {
+            return SpeechActivity.this;
+        }
+
     };
 
     protected void startVoiceRecorder() {
         if (mVoiceRecorder != null) {
-            mVoiceRecorder.unSynchedStop();
+            mVoiceRecorder.stop();
             mVoiceRecorder = null;
         }
         mVoiceRecorder = new VoiceRecorder(mVoiceCallback);
@@ -126,7 +112,7 @@ public abstract class SpeechActivity extends AppCompatActivity implements Messag
 
     protected void stopVoiceRecorder() {
         if (mVoiceRecorder != null) {
-            mVoiceRecorder.unSynchedStop(); // we added this new method to remove "synchronized (mLock)"
+            mVoiceRecorder.stop();
             mVoiceRecorder = null;
         }
     }
@@ -176,7 +162,7 @@ public abstract class SpeechActivity extends AppCompatActivity implements Messag
             // Start listening to voices
             startVoiceRecorder();
         } catch (Exception e) {
-            Log.d("resumeRecognition", "startVoiceRecorder() failed.");
+            Log.d("resumeRecognition", e.toString());
         }
         try {
             // Start listening to voices
@@ -278,7 +264,6 @@ public abstract class SpeechActivity extends AppCompatActivity implements Messag
         @Override
         public void onServiceConnected(ComponentName componentName, IBinder binder) {
             mSpeechService = SpeechService.from(binder);
-            mSpeechService.addListener(mSpeechServiceListener);
             mSpeechService.setSpeechActivity(SpeechActivity.this);
             isSpeechServiceBound = true;
             isSpeechServiceRunning = true;
@@ -322,7 +307,6 @@ public abstract class SpeechActivity extends AppCompatActivity implements Messag
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         if (requestCode == REQUEST_RECORD_AUDIO_PERMISSION) {
             if (permissions.length == 1 && grantResults.length == 1 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                startVoiceRecorder();
             } else {
                 showPermissionMessageDialog();
             }

@@ -73,6 +73,7 @@ public class ExpOneActivity extends SpeechActivity {
         responseServer.setResponseDelay(getResponseDelay());
         responseServer.setOnUtteranceStart(pauseRecognitionRunnable);
         responseServer.setOnUtteranceFinished(resumeRecognitionRunnable);
+        resumeRecognition();
     }
 
     DialogInterface.OnClickListener dialogClickListener = new DialogInterface.OnClickListener() {

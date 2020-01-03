@@ -310,12 +310,6 @@ public class ResponseServer {
         @Override
         protected Void doInBackground(Void... voids) {
             try {
-                try {
-                    activity.getOs().close();
-                }
-                catch (Exception e) {
-                    activity.setOs();
-                }
                 // Create speech synthesis request.
                 SynthesizeSpeechPresignRequest synthesizeSpeechPresignRequest =
                         new SynthesizeSpeechPresignRequest()
@@ -379,6 +373,11 @@ public class ResponseServer {
         protected String doInBackground(String... strings) {
             StringBuilder result = new StringBuilder();
             try {
+
+                // Send the audio here
+                // String filePath = activity.getExternalCacheDir().getAbsolutePath() + "/recording.wav";
+
+
                 String urlParameters = strings[0];
                 Log.d("urlParameters", urlParameters);
                 URL url = new URL(responseServerAddress);
@@ -446,6 +445,49 @@ public class ResponseServer {
                 Log.d("ServerStat", e.toString());
                 speak("Please check your Internet connection.", false);
             }
+        }
+    }
+
+
+
+    @SuppressLint("StaticFieldLeak")
+    private class SendFiles extends AsyncTask<String, Integer, String> {
+
+        @Override
+        protected String doInBackground(String... strings) {
+            StringBuilder result = new StringBuilder();
+            try {
+                String urlParameters = strings[0];
+                Log.d("urlParameters", urlParameters);
+                URL url = new URL("http://amandabot.xyz/about/1.12/");
+                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                conn.setReadTimeout(10000);
+                conn.setConnectTimeout(15000);
+                conn.setRequestMethod("POST");
+                conn.setDoInput(true);
+                conn.setDoOutput(true);
+                OutputStream os = conn.getOutputStream();
+                DataOutputStream writer = new DataOutputStream(os);
+                writer.writeBytes(urlParameters);
+                writer.flush();
+                writer.close();
+                os.close();
+                int status = conn.getResponseCode();
+                Log.d("FetchResponseR", "HTTP STATUS: " + String.valueOf(status));
+                InputStream inputStream = conn.getInputStream();
+                BufferedReader in = new BufferedReader(new InputStreamReader(inputStream, "UTF-8"));
+                for (int c; (c = in.read()) >= 0;)
+                    result.append((char)c);
+            } catch (IOException e) {
+                Log.d("FetchResponseR", "IOException");
+                e.printStackTrace();
+            }
+            return result.toString();
+        }
+
+        @Override
+        protected void onPostExecute(String result) {
+            super.onPostExecute(result);
         }
     }
 }
