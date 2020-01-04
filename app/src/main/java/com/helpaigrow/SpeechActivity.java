@@ -41,6 +41,9 @@ public abstract class SpeechActivity extends AppCompatActivity implements Messag
     //Voice Recorder
     protected VoiceRecorder mVoiceRecorder;
 
+    // Audio Saver
+    protected SaveAudio saveAudio;
+
     // Abstract Methods
     protected abstract void runCommand(int commandCode, int fulfillment, String responseParameter, String nextCommandHintText, boolean hasTriedAllCommands, boolean commandCompleted);
     protected abstract void goToQuestions();
@@ -68,13 +71,19 @@ public abstract class SpeechActivity extends AppCompatActivity implements Messag
             if (mSpeechService != null) {
                 mSpeechService.startRecognizing(mVoiceRecorder.getSampleRate());
             }
+
+            String filePath = getActivity().getExternalCacheDir().getAbsolutePath() + "/recording_" + System.currentTimeMillis() / 1000 + ".wav";
+            saveAudio = new SaveAudio(mVoiceRecorder.getCHANNEL(), mVoiceRecorder.getSampleRate(), mVoiceRecorder.getENCODING(), filePath);
         }
 
         @Override
-        public void onVoice(byte[] data, int size) {
+        public void onVoice(byte[] data, int size, int channel, int sampleRate, int encoding) {
 //            Log.i("SpeechActivity", "onVoice()");
             if (mSpeechService != null) {
                 mSpeechService.recognize(data, size);
+            }
+            if (saveAudio != null) {
+                saveAudio.streamSaveFile(data, size);
             }
         }
 
@@ -84,6 +93,10 @@ public abstract class SpeechActivity extends AppCompatActivity implements Messag
             showStatus(false);
             if (mSpeechService != null) {
                 mSpeechService.finishRecognizing();
+            }
+            if (saveAudio != null) {
+                saveAudio.closeFile();
+                saveAudio.saveToServer();
             }
         }
 
@@ -131,10 +144,10 @@ public abstract class SpeechActivity extends AppCompatActivity implements Messag
             pauseRecognition();
         }
     };
-    protected Runnable resumeRecognitionRunnable = new Runnable() {
+    protected Runnable startRecognitionRunnable = new Runnable() {
         @Override
         public void run() {
-            resumeRecognition();
+            startRecognition();
         }
     };
 
@@ -157,18 +170,18 @@ public abstract class SpeechActivity extends AppCompatActivity implements Messag
         isTalking = true;
         showStatus(false);
     }
-    protected void resumeRecognition(){
+    protected void startRecognition(){
         try {
             // Start listening to voices
             startVoiceRecorder();
         } catch (Exception e) {
-            Log.d("resumeRecognition", e.toString());
+            Log.d("startRecognition", e.toString());
         }
         try {
             // Start listening to voices
             mSpeechService.addListener(mSpeechServiceListener);
         } catch (Exception e) {
-            Log.d("resumeRecognition", "mSpeechService.addListener(mSpeechServiceListener); failed.");
+            Log.d("startRecognition", "mSpeechService.addListener(mSpeechServiceListener); failed.");
         }
         isSpeechServiceRunning = true;
         isTalking = false;

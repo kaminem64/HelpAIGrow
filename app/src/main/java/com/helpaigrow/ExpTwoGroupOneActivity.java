@@ -118,7 +118,7 @@ public class ExpTwoGroupOneActivity extends SpeechActivity {
         responseServer.setResponseServerAddress(getResponseServerUrl());
         responseServer.setResponseDelay(getResponseDelay());
         responseServer.setOnUtteranceStart(pauseRecognitionRunnable);
-        responseServer.setOnUtteranceFinished(resumeRecognitionRunnable);
+        responseServer.setOnUtteranceFinished(startRecognitionRunnable);
     }
 
 

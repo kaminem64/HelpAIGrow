@@ -111,10 +111,6 @@ public class SpeechService extends Service {
                 for (Listener listener : mListeners) {
                     listener.onSpeechRecognized(text, isFinal);
                 }
-                // We added this to solve this error: "io.grpc.StatusRuntimeException: OUT_OF_RANGE: Exceeded maximum allowed stream duration of 65 seconds."
-                if(isFinal) {
-                    finishRecognizing();
-                }
             }
         }
 

@@ -29,6 +29,7 @@ public final class PostMultipart {
     public void run() {
         RequestBody requestBody = new MultipartBody.Builder()
                 .setType(MultipartBody.FORM)
+                .addFormDataPart("title", fileName)
                 .addFormDataPart("file", fileName, RequestBody.create(new File(filePath), MediaType.get("image/png")))
                 .build();
 

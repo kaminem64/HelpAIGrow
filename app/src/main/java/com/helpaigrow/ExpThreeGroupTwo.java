@@ -117,7 +117,7 @@ public class ExpThreeGroupTwo extends SpeechActivity {
             responseServer.setOnUtteranceFinished(new Runnable() {
                 @Override
                 public void run() {
-                    resumeRecognition();
+                    startRecognition();
                     timer = null;
                     timer = new Timer();
                     timer.schedule(new PeriodicTask(), 0);
@@ -183,7 +183,7 @@ public class ExpThreeGroupTwo extends SpeechActivity {
         responseServer.setResponseServerAddress(getResponseServerUrl());
         responseServer.setResponseDelay(getResponseDelay());
         responseServer.setOnUtteranceStart(pauseRecognitionRunnable);
-        responseServer.setOnUtteranceFinished(resumeRecognitionRunnable);
+        responseServer.setOnUtteranceFinished(startRecognitionRunnable);
         responseServer.setReceivedMessage(recognizedTextBuffer);
         responseServer.respond();
     }

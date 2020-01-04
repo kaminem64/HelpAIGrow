@@ -243,6 +243,11 @@ public class ResponseServer {
         }
     }
 
+    public void simpleRespond() {
+        ResponseServer.this.onUtteranceStart();
+        respond();
+    }
+
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 

@@ -72,8 +72,8 @@ public class ExpOneActivity extends SpeechActivity {
         responseServer.setResponseServerAddress(getResponseServerUrl());
         responseServer.setResponseDelay(getResponseDelay());
         responseServer.setOnUtteranceStart(pauseRecognitionRunnable);
-        responseServer.setOnUtteranceFinished(resumeRecognitionRunnable);
-        resumeRecognition();
+        responseServer.setOnUtteranceFinished(startRecognitionRunnable);
+//        startRecognition();
     }
 
     DialogInterface.OnClickListener dialogClickListener = new DialogInterface.OnClickListener() {
@@ -195,6 +195,15 @@ public class ExpOneActivity extends SpeechActivity {
         responseServer.setReceivedMessage(recognizedTextBuffer);
         responseServer.startSilenceTimer();
         isSilenceTimerRunning = true;
+
+        // TODO: read:
+        // alternatively we could have:
+        // responseServer.startSilenceTimer();
+        // and then remove everything related to the timer
+        // this way we can control the length of the conversation using SPEECH_TIMEOUT_MILLIS in VoiceRecorder
+        // The know problem is that when we use the mentioned method, voice is recorded properly but google recognition stops after the final signal
+        // We should either switch to LongRequest for google or start sending the audio to the google service again. It seems that dismiss() alongside with
+        // timers do that.
     }
 
     @Override
