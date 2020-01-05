@@ -4,6 +4,7 @@ import android.Manifest;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.IBinder;
 import android.support.annotation.NonNull;
@@ -15,8 +16,11 @@ import android.util.Log;
 import java.io.BufferedOutputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.util.Objects;
 
 public abstract class SpeechActivity extends AppCompatActivity implements MessageDialogFragment.Listener {
+
+    protected boolean isTimedResponse = false;
 
     // Constants
     protected static final String FRAGMENT_MESSAGE_DIALOG = "message_dialog";
@@ -24,12 +28,14 @@ public abstract class SpeechActivity extends AppCompatActivity implements Messag
 
     final Object mLock = new Object();
     public static final String USERSETTINGS = "PrefsFile";
+    public String uniqueID;
+    public int conversationTurn;
 
     protected boolean isIceBroken = false;
     protected boolean isSpeechServiceRunning = false;
     protected boolean isTalking = false;
     protected boolean ismApiWorking = false;
-    protected boolean isSilenceTimerRunning = false;
+    protected boolean isSpeechFinalized = false;
 
     // Services
     protected SpeechService mSpeechService;
@@ -52,12 +58,107 @@ public abstract class SpeechActivity extends AppCompatActivity implements Messag
     protected abstract void unFinalizedRecognizedText(String text);
     protected abstract void showListeningState(boolean hearingVoice);
     protected abstract void showTalkingState();
+    protected abstract void showThinkingState();
     protected abstract void showLoadingState();
     protected abstract SpeechActivity getActivity();
     protected abstract String getResponseServerUrl();
-    protected abstract long getResponseDelay();
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    /**
+    Silent Timer
+     */
+    private TimedResponse timedResponse;
+
+    private long lastUtterance = 0;
+
+
+    private class TimedResponse {
+        private final int SILENT_THRESHOLD = 3000;
+        private Thread timerThread;
+        final Object timerLock = new Object();
+
+        void start() {
+            timerThread = new Thread(new TimedResponse.SilentTimer());
+            timerThread.start();
+        }
+
+        void stop() {
+            synchronized (timerLock) {
+                lastUtterance = 0;
+                if (timerThread != null) {
+                    timerThread.interrupt();
+                    timerThread = null;
+                }
+            }
+        }
+
+        private class SilentTimer implements Runnable {
+
+            @Override
+            public void run() {
+                while (true) {
+                    synchronized (timerLock) {
+                        if (Thread.currentThread().isInterrupted()) {
+                            break;
+                        }
+                        final long now = System.currentTimeMillis();
+                        if (!isTalking) {
+                            if (lastUtterance != 0 && (now - lastUtterance > SILENT_THRESHOLD) && isSpeechFinalized) {
+                                Log.d("SpeechService", "" + (now - lastUtterance)/1000);
+                                showStatusIsThinking();
+                                if (mSpeechService != null) {
+                                    mSpeechService.finishRecognizing();
+                                }
+                                pauseRecognition();
+                                if (saveAudio != null) {
+                                    saveAudio.closeFile();
+                                    new Thread(saveAudio).start();
+                                }
+                                lastUtterance = 0;
+                                responseServer.respond();
+                            }
+                        }
+                    }
+
+                }
+            }
+        }
+    }
+
+    protected void startTimedResponse() {
+        if (timedResponse != null) {
+            timedResponse.stop();
+            timedResponse = null;
+        }
+        timedResponse = new TimedResponse();
+        timedResponse.start();
+    }
+
+    protected void stopTimedResponse() {
+        if (timedResponse != null) {
+            timedResponse.stop();
+            timedResponse = null;
+        }
+    }
+
+    protected final ResponseServer.Callback responseServerCallback = new ResponseServer.Callback() {
+        @Override
+        public void onUtteranceStart() {
+            if (isTimedResponse) {
+                stopTimedResponse();
+            }
+            pauseRecognition();
+        }
+
+        @Override
+        public void onUtteranceFinished() {
+            startRecognition();
+            if (isTimedResponse) {
+                startTimedResponse();
+            }
+        }
+    };
 
     /**
      * Voice Recorder
@@ -66,19 +167,14 @@ public abstract class SpeechActivity extends AppCompatActivity implements Messag
 
         @Override
         public void onVoiceStart() {
-//            Log.i("SpeechActivity", "onVoiceStart()");
             showStatus(true);
             if (mSpeechService != null) {
                 mSpeechService.startRecognizing(mVoiceRecorder.getSampleRate());
             }
-
-            String filePath = getActivity().getExternalCacheDir().getAbsolutePath() + "/recording_" + System.currentTimeMillis() / 1000 + ".wav";
-            saveAudio = new SaveAudio(mVoiceRecorder.getCHANNEL(), mVoiceRecorder.getSampleRate(), mVoiceRecorder.getENCODING(), filePath);
         }
 
         @Override
         public void onVoice(byte[] data, int size, int channel, int sampleRate, int encoding) {
-//            Log.i("SpeechActivity", "onVoice()");
             if (mSpeechService != null) {
                 mSpeechService.recognize(data, size);
             }
@@ -89,14 +185,9 @@ public abstract class SpeechActivity extends AppCompatActivity implements Messag
 
         @Override
         public void onVoiceEnd() {
-//            Log.i("SpeechActivity", "onVoiceStart()");
             showStatus(false);
             if (mSpeechService != null) {
                 mSpeechService.finishRecognizing();
-            }
-            if (saveAudio != null) {
-                saveAudio.closeFile();
-                saveAudio.saveToServer();
             }
         }
 
@@ -106,12 +197,6 @@ public abstract class SpeechActivity extends AppCompatActivity implements Messag
                 mVoiceRecorder.setOtherServicesReady(mSpeechService.isServiceReady());
             }
         }
-
-        @Override
-        public SpeechActivity getActivity() {
-            return SpeechActivity.this;
-        }
-
     };
 
     protected void startVoiceRecorder() {
@@ -129,6 +214,7 @@ public abstract class SpeechActivity extends AppCompatActivity implements Messag
             mVoiceRecorder = null;
         }
     }
+    ////////////////////////////////
 
     protected void stopSpeaking() {
         if (responseServer != null) {
@@ -137,19 +223,6 @@ public abstract class SpeechActivity extends AppCompatActivity implements Messag
         }
     }
 
-
-    protected Runnable pauseRecognitionRunnable = new Runnable() {
-        @Override
-        public void run() {
-            pauseRecognition();
-        }
-    };
-    protected Runnable startRecognitionRunnable = new Runnable() {
-        @Override
-        public void run() {
-            startRecognition();
-        }
-    };
 
     protected void pauseRecognition(){
         try {
@@ -175,7 +248,19 @@ public abstract class SpeechActivity extends AppCompatActivity implements Messag
             // Start listening to voices
             startVoiceRecorder();
         } catch (Exception e) {
-            Log.d("startRecognition", e.toString());
+            Log.d("startRecognition", "startVoiceRecorder() failed.");
+        }
+        try {
+            SharedPreferences settings = getSharedPreferences(USERSETTINGS, 0);
+            uniqueID = settings.getString("uniqueID", "NotSpecified");
+            conversationTurn = settings.getInt("conversationTurn", 1);
+
+            String filePath = Objects.requireNonNull(getActivity().getExternalCacheDir()).getAbsolutePath() +
+                    "/" + uniqueID + "_" + conversationTurn + "___" + System.currentTimeMillis() / 1000 + ".wav";
+            saveAudio = new SaveAudio(mVoiceRecorder.getCHANNEL(), mVoiceRecorder.getSampleRate(), mVoiceRecorder.getENCODING(), filePath);
+        }
+        catch (Exception e) {
+            e.printStackTrace();
         }
         try {
             // Start listening to voices
@@ -205,9 +290,12 @@ public abstract class SpeechActivity extends AppCompatActivity implements Messag
                     try {
                         if (isFinal) {
                             finalizedRecognizedText(text);
+                            isSpeechFinalized = true;
                         } else {
                             unFinalizedRecognizedText(text);
+                            isSpeechFinalized = false;
                         }
+                        lastUtterance = System.currentTimeMillis();
                     } catch (Exception e) {
                         Log.d("SpeechService", "Listener stopped because some objects are null.");
                     }
@@ -261,6 +349,16 @@ public abstract class SpeechActivity extends AppCompatActivity implements Messag
                 }
             }
         });
+    }
+
+
+    protected void showStatusIsThinking() {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                showThinkingState();
+        }
+    });
     }
 
 

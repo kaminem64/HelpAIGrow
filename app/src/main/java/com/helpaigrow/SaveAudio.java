@@ -11,7 +11,7 @@ import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
-class SaveAudio {
+class SaveAudio implements Runnable{
     private FileOutputStream wavOut;
     private File wavFile;
     private String filePath;
@@ -189,4 +189,8 @@ class SaveAudio {
         }
     }
 
+    @Override
+    public void run() {
+        this.saveToServer();
+    }
 }

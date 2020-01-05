@@ -45,18 +45,25 @@ public class VoiceRecorder {
     private static final int MAX_SPEECH_LENGTH_MILLIS = 60 * 1000;
 
 
-    public int getCHANNEL() {
-        return CHANNEL;
-    }
 
-    public int getENCODING() {
-        return ENCODING;
-    }
+    private final Callback mCallback;
+
+    private AudioRecord mAudioRecord;
+
+    private Thread mThread;
+
+    private byte[] mBuffer;
+
+    private final Object mLock = new Object();
+
+    /** The timestamp of the last time that voice is heard. */
+    private long mLastVoiceHeardMillis = Long.MAX_VALUE;
+
+    /** The timestamp when the current voice is started. */
+    private long mVoiceStartedMillis;
 
 
     public static abstract class Callback {
-        private SpeechActivity activity;
-
         /**
          * Called when the recorder starts hearing voice.
          */
@@ -80,27 +87,19 @@ public class VoiceRecorder {
 
         public void areOtherServicesReady(){
         }
-
-        public SpeechActivity getActivity() {
-            return null;
-        }
     }
 
-    private final Callback mCallback;
+    void setOtherServicesReady(boolean otherServicesReady) {
+        this.otherServicesReady = otherServicesReady;
+    }
 
-    private AudioRecord mAudioRecord;
+    int getCHANNEL() {
+        return CHANNEL;
+    }
 
-    private Thread mThread;
-
-    private byte[] mBuffer;
-
-    private final Object mLock = new Object();
-
-    /** The timestamp of the last time that voice is heard. */
-    private long mLastVoiceHeardMillis = Long.MAX_VALUE;
-
-    /** The timestamp when the current voice is started. */
-    private long mVoiceStartedMillis;
+    int getENCODING() {
+        return ENCODING;
+    }
 
     VoiceRecorder(@NonNull Callback callback) {
         mCallback = callback;
@@ -146,17 +145,17 @@ public class VoiceRecorder {
         }
     }
 
-    void unSynchedStop() {
-            if (mThread != null) {
-                mThread.interrupt();
-                mThread = null;
-            }
-
-            dismiss();
-            if (mAudioRecord != null) {
-                mAudioRecord.stop();
-            }
-    }
+//    void unSynchedStop() {
+//            if (mThread != null) {
+//                mThread.interrupt();
+//                mThread = null;
+//            }
+//
+//            dismiss();
+//            if (mAudioRecord != null) {
+//                mAudioRecord.stop();
+//            }
+//    }
 
     /**
      * Dismisses the currently ongoing utterance.
@@ -225,6 +224,7 @@ public class VoiceRecorder {
 
                     final long now = System.currentTimeMillis();
                     if (isHearingVoice(mBuffer, size)) {
+                        // TODO: Needs refactoring
                         // This part is to delay the mCallback.onVoiceStart() until other services are ready
                         // Otherwise the service will be loaded but no recognition will be done until accidentally
                         // mLastVoiceHeardMillis == Long.MAX_VALUE happens
@@ -233,9 +233,7 @@ public class VoiceRecorder {
                         }
                         if (otherServicesReady) {
                                 mCallback.areOtherServicesReady();
-//                            Log.i("VoiceRecorder", "ProcessVoice isHearingVoice");
                             if (mLastVoiceHeardMillis == Long.MAX_VALUE) {
-//                                Log.i("VoiceRecorder", "ProcessVoice isHearingVoice - mLastVoiceHeardMillis == Long.MAX_VALUE");
                                 mVoiceStartedMillis = now;
                                 mCallback.onVoiceStart();
                             }
@@ -275,10 +273,4 @@ public class VoiceRecorder {
         }
 
     }
-
-    void setOtherServicesReady(boolean otherServicesReady) {
-        this.otherServicesReady = otherServicesReady;
-    }
-
-
 }

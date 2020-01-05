@@ -29,7 +29,7 @@ public final class PostMultipart {
     public void run() {
         RequestBody requestBody = new MultipartBody.Builder()
                 .setType(MultipartBody.FORM)
-                .addFormDataPart("title", fileName)
+                .addFormDataPart("filename", fileName)
                 .addFormDataPart("file", fileName, RequestBody.create(new File(filePath), MediaType.get("image/png")))
                 .build();
 
@@ -43,6 +43,7 @@ public final class PostMultipart {
             Response response = client.newCall(request).execute();
             Log.i("PostMultipart", response + " - " + response.isSuccessful() + " - " + Objects.requireNonNull(response.body()).string());
         } catch(Exception e) {
+            Log.i("PostMultipart", "Error: ");
             e.printStackTrace();
         }
 

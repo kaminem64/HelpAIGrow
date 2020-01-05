@@ -27,7 +27,6 @@ public class ExpOneActivity extends SpeechActivity {
     private boolean firstTimeShown = true;
 
     protected String responseServerUrl = "http://amandabot.xyz/response/";
-    protected long responseDelay = 2000;
 
     private final String WAITING_FOR_SERVER = "Thinking ...";
     private final String LISTENING_MESSAGE = "Listening ...";
@@ -50,6 +49,9 @@ public class ExpOneActivity extends SpeechActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        isTimedResponse = true;
+
         setContentView(R.layout.activity_exp_one);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
@@ -68,12 +70,8 @@ public class ExpOneActivity extends SpeechActivity {
         recognizedText = findViewById(R.id.recognizedTextExp1);
         recognizedTextBuffer = new ArrayList<>();
 
-        responseServer = new ResponseServer(this);
+        responseServer = new ResponseServer(this, responseServerCallback);
         responseServer.setResponseServerAddress(getResponseServerUrl());
-        responseServer.setResponseDelay(getResponseDelay());
-        responseServer.setOnUtteranceStart(pauseRecognitionRunnable);
-        responseServer.setOnUtteranceFinished(startRecognitionRunnable);
-//        startRecognition();
     }
 
     DialogInterface.OnClickListener dialogClickListener = new DialogInterface.OnClickListener() {
@@ -150,7 +148,8 @@ public class ExpOneActivity extends SpeechActivity {
             try {
                 pauseRecognition(); //Pause the recognition before Amanda gets to talk first. Otherwise on slower internet connection we might have a problem of detecting some words before the conversation starts.
             } catch (Exception ignore) {}
-            responseServer.breakTheIce();
+            showStatusIsThinking();
+            responseServer.respond();
             isIceBroken = true;
         }
     }
@@ -184,38 +183,14 @@ public class ExpOneActivity extends SpeechActivity {
     }
 
     @Override
-    protected long getResponseDelay() {
-        return responseDelay;
-    }
-
-    @Override
     protected void finalizedRecognizedText(String text) {
         recognizedText.setText(text);
         recognizedTextBuffer.add(text);
         responseServer.setReceivedMessage(recognizedTextBuffer);
-        responseServer.startSilenceTimer();
-        isSilenceTimerRunning = true;
-
-        // TODO: read:
-        // alternatively we could have:
-        // responseServer.startSilenceTimer();
-        // and then remove everything related to the timer
-        // this way we can control the length of the conversation using SPEECH_TIMEOUT_MILLIS in VoiceRecorder
-        // The know problem is that when we use the mentioned method, voice is recorded properly but google recognition stops after the final signal
-        // We should either switch to LongRequest for google or start sending the audio to the google service again. It seems that dismiss() alongside with
-        // timers do that.
     }
 
     @Override
     protected void unFinalizedRecognizedText(String text) {
-        if (isSilenceTimerRunning) {
-            try {
-                responseServer.killSilenceTimer();
-                isSilenceTimerRunning = false;
-            } catch (Exception ignored) {
-                Log.d("Location", "unFinalizedRecognizedText. Failed to kill Silence Timer!");
-            }
-        }
         recognizedText.setText(text);
     }
 
@@ -233,6 +208,14 @@ public class ExpOneActivity extends SpeechActivity {
     protected void showTalkingState() {
         microphoneIcon.setImageResource(R.drawable.chat);
         recognizedText.setText(TALKING);
+        spinner.setVisibility(View.GONE);
+        loadingWhiteTransparent.setVisibility(View.GONE);
+    }
+
+    @Override
+    protected void showThinkingState() {
+        microphoneIcon.setImageResource(R.drawable.chat);
+        recognizedText.setText(WAITING_FOR_SERVER);
         spinner.setVisibility(View.GONE);
         loadingWhiteTransparent.setVisibility(View.GONE);
     }

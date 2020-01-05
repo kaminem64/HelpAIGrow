@@ -114,11 +114,10 @@ public class ExpTwoGroupOneActivity extends SpeechActivity {
             }
         });
 
-        responseServer = new ResponseServer(this);
+        responseServer = new ResponseServer(this, responseServerCallback);
         responseServer.setResponseServerAddress(getResponseServerUrl());
-        responseServer.setResponseDelay(getResponseDelay());
-        responseServer.setOnUtteranceStart(pauseRecognitionRunnable);
-        responseServer.setOnUtteranceFinished(startRecognitionRunnable);
+//        responseServer.setOnUtteranceStart(pauseRecognitionRunnable);
+//        responseServer.setOnUtteranceFinished(startRecognitionRunnable);
     }
 
 
@@ -161,7 +160,7 @@ public class ExpTwoGroupOneActivity extends SpeechActivity {
             ActivityCompat.requestPermissions(getActivity(), new String[]{Manifest.permission.RECORD_AUDIO}, REQUEST_RECORD_AUDIO_PERMISSION);
         }
         if(!isIceBroken) {
-            responseServer.breakTheIce();
+            responseServer.respond();
             isIceBroken = true;
         }
     }
@@ -190,11 +189,6 @@ public class ExpTwoGroupOneActivity extends SpeechActivity {
     @Override
     protected String getResponseServerUrl() {
         return responseServerUrl;
-    }
-
-    @Override
-    protected long getResponseDelay() {
-        return responseDelay;
     }
 
     @Override
@@ -289,6 +283,11 @@ public class ExpTwoGroupOneActivity extends SpeechActivity {
         recognizedText.setText(TALKING);
         spinner.setVisibility(View.GONE);
         loadingWhiteTransparent.setVisibility(View.GONE);
+    }
+
+    @Override
+    protected void showThinkingState() {
+
     }
 
     protected void showLoadingState() {

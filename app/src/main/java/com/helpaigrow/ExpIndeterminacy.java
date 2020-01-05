@@ -97,11 +97,8 @@ public class ExpIndeterminacy extends SpeechActivity {
             }
         });
 
-        responseServer = new ResponseServer(this);
+        responseServer = new ResponseServer(this, responseServerCallback);
         responseServer.setResponseServerAddress(getResponseServerUrl());
-        responseServer.setResponseDelay(getResponseDelay());
-        responseServer.setOnUtteranceStart(pauseRecognitionRunnable);
-        responseServer.setOnUtteranceFinished(startRecognitionRunnable);
     }
 
 
@@ -143,10 +140,10 @@ public class ExpIndeterminacy extends SpeechActivity {
         } else {
             ActivityCompat.requestPermissions(getActivity(), new String[]{Manifest.permission.RECORD_AUDIO}, REQUEST_RECORD_AUDIO_PERMISSION);
         }
-        if(!isIceBroken) {
-            responseServer.breakTheIce();
-            isIceBroken = true;
-        }
+        try {
+            pauseRecognition(); //Pause the recognition before Amanda gets to talk first. Otherwise on slower internet connection we might have a problem of detecting some words before the conversation starts.
+        } catch (Exception ignore) {}
+        startRecognition();
     }
 
     @Override
@@ -170,15 +167,14 @@ public class ExpIndeterminacy extends SpeechActivity {
     }
 
     @Override
-    protected long getResponseDelay() {
-        return responseDelay;
-    }
-
-    @Override
     protected void finalizedRecognizedText(String text) {
         recognizedText.setText(text);
         recognizedTextBuffer.add(text);
         responseServer.setReceivedMessage(recognizedTextBuffer);
+        if (saveAudio != null) {
+            saveAudio.closeFile();
+            new Thread(saveAudio).start();
+        }
         responseServer.respond();
     }
 
@@ -240,6 +236,11 @@ public class ExpIndeterminacy extends SpeechActivity {
         recognizedText.setText(TALKING);
         spinner.setVisibility(View.GONE);
         loadingWhiteTransparent.setVisibility(View.GONE);
+    }
+
+    @Override
+    protected void showThinkingState() {
+
     }
 
     protected void showLoadingState() {

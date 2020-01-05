@@ -1,5 +1,6 @@
 package com.helpaigrow;
 
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
@@ -16,6 +17,8 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import java.io.File;
 
 public class WelcomeActivity extends AppCompatActivity {
     public static final String USERSETTINGS = "PrefsFile";
@@ -83,8 +86,32 @@ public class WelcomeActivity extends AppCompatActivity {
                 return handled;
             }
         });
+        deleteCache(getApplicationContext());
     }
 
+    public static void deleteCache(Context context) {
+        try {
+            File dir = context.getExternalCacheDir();
+            deleteDir(dir);
+        } catch (Exception e) { e.printStackTrace();}
+    }
+
+    public static boolean deleteDir(File dir) {
+        if (dir != null && dir.isDirectory()) {
+            String[] children = dir.list();
+            for (String child : children) {
+                boolean success = deleteDir(new File(dir, child));
+                if (!success) {
+                    return false;
+                }
+            }
+            return dir.delete();
+        } else if(dir!= null && dir.isFile()) {
+            return dir.delete();
+        } else {
+            return false;
+        }
+    }
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         MenuInflater inflater = getMenuInflater();

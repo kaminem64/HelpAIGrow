@@ -3,11 +3,10 @@ package com.helpaigrow;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.media.AudioAttributes;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.os.AsyncTask;
-import android.os.Build;
+import android.support.annotation.NonNull;
 import android.text.TextUtils;
 import android.util.Log;
 import com.amazonaws.auth.CognitoCachingCredentialsProvider;
@@ -26,9 +25,8 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Timer;
-import java.util.TimerTask;
 
 public class ResponseServer {
 
@@ -46,25 +44,35 @@ public class ResponseServer {
 
     // Settings
     private static final String USERSETTINGS = "PrefsFile";
+    private final SharedPreferences settings;
 
     private String conversationToken;
     private String voicePersona;
-    private long responseDelay;
     private SpeechActivity activity;
-    private Timer timer;
-    private TimerTask timerTask;
     private ArrayList<String> receivedMessage;
     private AudioManager audioManager;
 
-    private Runnable onUtteranceStartCallback;
-    private Runnable onUtteranceFinishedCallback;
 
-    ResponseServer(SpeechActivity activity) {
+    private Callback responseServerCallback;
+
+
+    public static abstract class Callback {
+
+        public void onUtteranceStart() {
+        }
+
+        public void onUtteranceFinished() {
+        }
+
+    }
+
+    ResponseServer(SpeechActivity activity, @NonNull Callback callback) {
 
         this.activity = activity;
+        this.responseServerCallback = callback;
 
         // Restore preferences
-        final SharedPreferences settings = activity.getSharedPreferences(USERSETTINGS, 0);
+        settings = activity.getSharedPreferences(USERSETTINGS, 0);
         conversationToken = settings.getString("conversationToken", "");
         voicePersona = settings.getString("voicePersona", "Joanna");
 
@@ -92,28 +100,6 @@ public class ResponseServer {
         client = new AmazonPollyPresigningClient(credentialsProvider);
     }
 
-    public void setOnUtteranceStart(Runnable onUtteranceStartCallback) {
-        this.onUtteranceStartCallback = onUtteranceStartCallback;
-    }
-
-    public void setOnUtteranceFinished(Runnable onUtteranceFinishedCallback) {
-        this.onUtteranceFinishedCallback = onUtteranceFinishedCallback;
-    }
-
-    private void onUtteranceStart() {
-        this.onUtteranceStartCallback.run();
-    }
-    private void onUtteranceFinished() {
-        this.onUtteranceFinishedCallback.run();
-    }
-
-//    private void resumeRecognition() {
-//        activity.resumeRecognition();
-//    }
-//    private void pauseRecognition() {
-//        activity.pauseRecognition();
-//    }
-
     private void setupNewMediaPlayer() {
         mediaPlayer = new MediaPlayer();
 
@@ -127,14 +113,13 @@ public class ResponseServer {
             public void onCompletion(MediaPlayer mp) {
                 mp.release();
                 setupNewMediaPlayer();
-                ResponseServer.this.onUtteranceFinished();
+                ResponseServer.this.responseServerCallback.onUtteranceFinished();
             }
         });
         mediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
             @Override
             public void onPrepared(MediaPlayer mp) {
-                // It seems to be too late to call onUtterancesStart() here. Will move it to SilentTimer
-                ResponseServer.this.onUtteranceStart();
+                ResponseServer.this.responseServerCallback.onUtteranceStart();
                 mp.start();
             }
         });
@@ -148,10 +133,6 @@ public class ResponseServer {
 
     public void setResponseServerAddress(String responseServerAddress) {
         this.responseServerAddress = responseServerAddress;
-    }
-
-    public void setResponseDelay(long responseDelay) {
-        this.responseDelay = responseDelay;
     }
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -204,50 +185,6 @@ public class ResponseServer {
     public void respond() {
         new FetchResponse().execute(prepareQuery());
     }
-
-    public void breakTheIce() {
-        respond();
-    }
-
-    /**
-     * SilenceCounter
-     */
-    public void startSilenceTimer() {
-        Log.d("Location", "startSilenceTimer");
-        if (this.timer != null) {
-            this.timer.cancel();
-            this.timer = null;
-        }
-        if (this.timerTask != null) {
-            this.timerTask.cancel();
-            this.timerTask = null;
-        }
-        this.timerTask = new TimerTask() {
-            @Override
-            public void run() {
-                Log.d("Location", "silenceTimerDone");
-                // Just to double-check that speech recognition is killed
-                ResponseServer.this.onUtteranceStart();
-                respond();
-            }
-        };
-        this.timer = new Timer();
-        this.timer.schedule(this.timerTask, responseDelay);
-    }
-
-    public void killSilenceTimer() {
-        Log.d("Location", "killTimer");
-        if (this.timerTask != null) {
-            this.timerTask.cancel();
-            this.timerTask = null;
-        }
-    }
-
-    public void simpleRespond() {
-        ResponseServer.this.onUtteranceStart();
-        respond();
-    }
-
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -324,9 +261,9 @@ public class ResponseServer {
                                 .withVoiceId(voicePersona)
                                 // Set format to MP3.
                                 .withOutputFormat(OutputFormat.Mp3)
+                                .withSampleRate("22050")
                                 .withTextType(this.textType)
                                 .withEngine(Engine.fromValue(this.engine));
-//                                .withSampleRate("22050");
                 // Get the presigned URL for synthesized speech audio stream.
                 URL presignedSynthesizeSpeechUrl =
                         client.getPresignedSynthesizeSpeechUrl(synthesizeSpeechPresignRequest);
@@ -335,15 +272,7 @@ public class ResponseServer {
                 // Create a media player to play the synthesized audio stream.
                 if (mediaPlayer.isPlaying()) {
                     setupNewMediaPlayer();
-                }
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                    mediaPlayer.setAudioAttributes(
-                            new AudioAttributes
-                                    .Builder()
-                                    .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
-                                    .build());
-                } else {
-                    mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
+                    Log.i("Polly", "Created a new media player");
                 }
                 if(this.isFinished) {
                     mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
@@ -378,11 +307,6 @@ public class ResponseServer {
         protected String doInBackground(String... strings) {
             StringBuilder result = new StringBuilder();
             try {
-
-                // Send the audio here
-                // String filePath = activity.getExternalCacheDir().getAbsolutePath() + "/recording.wav";
-
-
                 String urlParameters = strings[0];
                 Log.d("urlParameters", urlParameters);
                 URL url = new URL(responseServerAddress);
@@ -392,9 +316,6 @@ public class ResponseServer {
                 conn.setRequestMethod("POST");
                 conn.setDoInput(true);
                 conn.setDoOutput(true);
-//                conn.setUseCaches(false); // Don't use a Cached Copy
-//                conn.setRequestProperty("Connection", "Keep-Alive");
-//                conn.setRequestProperty("Content-Type", "multipart/form-data;boundary=" + "dhjsdkajshdakj");
                 OutputStream os = conn.getOutputStream();
                 DataOutputStream writer = new DataOutputStream(os);
                 writer.writeBytes(urlParameters);
@@ -404,7 +325,7 @@ public class ResponseServer {
                 int status = conn.getResponseCode();
                 Log.d("Location", "HTTP STATUS: " + String.valueOf(status));
                 InputStream inputStream = conn.getInputStream();
-                BufferedReader in = new BufferedReader(new InputStreamReader(inputStream, "UTF-8"));
+                BufferedReader in = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8));
                 for (int c; (c = in.read()) >= 0;)
                     result.append((char)c);
             } catch (IOException e) {
@@ -419,83 +340,52 @@ public class ResponseServer {
             super.onPostExecute(result);
             try {
                 JSONObject resultJSON = new JSONObject(result);
-                Log.d("ServerStat", "Created the JSON Obj");
+//                Log.d("ServerStat", "Created the JSON Obj");
                 JSONObject response = resultJSON.getJSONObject("response");
-                Log.d("ServerStat", "Got response");
+//                Log.d("ServerStat", "Got response");
                 String responseText = response.getString("message");
-                Log.d("ServerStat", "Got sentence");
+//                Log.d("ServerStat", "Got sentence");
                 boolean isFinished = response.getBoolean("is_finished");
-                Log.d("ServerStat", "Got is_finished");
+//                Log.d("ServerStat", "Got is_finished");
                 boolean isSSML = response.getBoolean("is_ssml");
-                Log.d("ServerStat", "Got is_ssml");
+//                Log.d("ServerStat", "Got is_ssml");
                 boolean isNeural = response.getBoolean("is_neural");
-                Log.d("ServerStat", "Got is_neural");
+//                Log.d("ServerStat", "Got is_neural");
                 String region = response.getString("region");
-                Log.d("ServerStat", "Got region");
+//                Log.d("ServerStat", "Got region");
+                int conversationTurn = 0;
+                try {
+                    conversationTurn = response.getInt("conversation_turn");
+//                    Log.d("ServerStat", "Got conversation_turn");
+                } catch (Exception ignored) {}
                 int responseCode = response.getInt("response_code");
-                Log.d("ServerStat", "Got response code");
+//                Log.d("ServerStat", "Got response_code");
                 int fulfillment = response.getInt("fulfillment");
-                Log.d("ServerStat", "Got fulfillment");
+//                Log.d("ServerStat", "Got fulfillment");
                 if (responseCode != 0) {
                     boolean commandCompleted = response.getBoolean("command_completed");
-                    Log.d("ServerStat", "Got command_completed");
+//                    Log.d("ServerStat", "Got command_completed");
                     String responseParameter = response.getString("response_parameter");
-                    Log.d("ServerStat", "Got response parameter");
+//                    Log.d("ServerStat", "Got response parameter");
                     String nextCommandHintText = response.getString("next_command_hint_text");
-                    Log.d("ServerStat", "Got next_command_hint_text");
+//                    Log.d("ServerStat", "Got next_command_hint_text");
                     boolean hasTriedAllCommands = response.getBoolean("has_tried_all_commands");
-                    Log.d("ServerStat", "Got has_tried_all_commands");
+//                    Log.d("ServerStat", "Got has_tried_all_commands");
                     activity.runCommand(responseCode, fulfillment, responseParameter, nextCommandHintText, hasTriedAllCommands, commandCompleted);
                 }
-                if(!responseText.equals("")) speak(responseText, isFinished, isSSML, isNeural, region);
+                if(!responseText.equals("")){
+                    speak(responseText, isFinished, isSSML, isNeural, region);
+                    if (conversationTurn != 0) {
+                        SharedPreferences.Editor editor = settings.edit();
+                        editor.putInt("conversationTurn", conversationTurn);
+                        editor.apply();
+                    }
+                }
             } catch (JSONException e) {
                 e.printStackTrace();
                 Log.d("ServerStat", e.toString());
                 speak("Please check your Internet connection.", false);
             }
-        }
-    }
-
-
-
-    @SuppressLint("StaticFieldLeak")
-    private class SendFiles extends AsyncTask<String, Integer, String> {
-
-        @Override
-        protected String doInBackground(String... strings) {
-            StringBuilder result = new StringBuilder();
-            try {
-                String urlParameters = strings[0];
-                Log.d("urlParameters", urlParameters);
-                URL url = new URL("http://amandabot.xyz/about/1.12/");
-                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-                conn.setReadTimeout(10000);
-                conn.setConnectTimeout(15000);
-                conn.setRequestMethod("POST");
-                conn.setDoInput(true);
-                conn.setDoOutput(true);
-                OutputStream os = conn.getOutputStream();
-                DataOutputStream writer = new DataOutputStream(os);
-                writer.writeBytes(urlParameters);
-                writer.flush();
-                writer.close();
-                os.close();
-                int status = conn.getResponseCode();
-                Log.d("FetchResponseR", "HTTP STATUS: " + String.valueOf(status));
-                InputStream inputStream = conn.getInputStream();
-                BufferedReader in = new BufferedReader(new InputStreamReader(inputStream, "UTF-8"));
-                for (int c; (c = in.read()) >= 0;)
-                    result.append((char)c);
-            } catch (IOException e) {
-                Log.d("FetchResponseR", "IOException");
-                e.printStackTrace();
-            }
-            return result.toString();
-        }
-
-        @Override
-        protected void onPostExecute(String result) {
-            super.onPostExecute(result);
         }
     }
 }

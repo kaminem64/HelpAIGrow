@@ -103,9 +103,8 @@ public class ExpThreeGroupTwo extends SpeechActivity {
         } else {
             ActivityCompat.requestPermissions(getActivity(), new String[]{Manifest.permission.RECORD_AUDIO}, REQUEST_RECORD_AUDIO_PERMISSION);
         }
-        responseServer = new ResponseServer(this);
+        responseServer = new ResponseServer(this, responseServerCallback);
         responseServer.setResponseServerAddress(getResponseServerUrl());
-        responseServer.setResponseDelay(getResponseDelay());
         startGameThread = new startTheGame();
         startGameThread.start();
     }
@@ -113,27 +112,35 @@ public class ExpThreeGroupTwo extends SpeechActivity {
     Runnable startGameRunnable = new Runnable() {
         @Override
         public void run() {
-            responseServer.setOnUtteranceStart(pauseRecognitionRunnable);
-            responseServer.setOnUtteranceFinished(new Runnable() {
-                @Override
-                public void run() {
-                    startRecognition();
-                    timer = null;
-                    timer = new Timer();
-                    timer.schedule(new PeriodicTask(), 0);
-                }
-            });
-            responseServer.breakTheIce();
+//            responseServer.setOnUtteranceStart(pauseRecognitionRunnable);
+//            responseServer.setOnUtteranceFinished(new Runnable() {
+//                @Override
+//                public void run() {
+//                    startRecognition();
+//                    timer = null;
+//                    timer = new Timer();
+//                    timer.schedule(new PeriodicTask(), 0);
+//                }
+//            });
+            responseServer.respond();
             isIceBroken = true;
         }
     };
 
 
+    /**
+     * *****************************************************************************
+     * *****************************************************************************
+     * TODO: We need to replace all setOnUtteranceStart() and setOnUtteranceFinished() uses to responseServerCallbacks
+     * *****************************************************************************
+     * *****************************************************************************
+     */
+
     class startTheGame extends Thread {
         public void run() {
             synchronized (mLock) {
-                responseServer.setOnUtteranceStart(pauseRecognitionRunnable);
-                responseServer.setOnUtteranceFinished(startGameRunnable);
+//                responseServer.setOnUtteranceStart(pauseRecognitionRunnable);
+//                responseServer.setOnUtteranceFinished(startGameRunnable);
                 responseServer.speak("Hi! In this game you need to collect points by tapping on the circles while answering questions that I ask. You shall not stop tapping on circles while answering the questions. Good luck!", false);
             }
         }
@@ -179,11 +186,10 @@ public class ExpThreeGroupTwo extends SpeechActivity {
     protected void finalizedRecognizedText(String text) {
         recognizedText.setText(text);
         recognizedTextBuffer.add(text);
-        ResponseServer responseServer = new ResponseServer(this);
+        ResponseServer responseServer = new ResponseServer(this, responseServerCallback);
         responseServer.setResponseServerAddress(getResponseServerUrl());
-        responseServer.setResponseDelay(getResponseDelay());
-        responseServer.setOnUtteranceStart(pauseRecognitionRunnable);
-        responseServer.setOnUtteranceFinished(startRecognitionRunnable);
+//        responseServer.setOnUtteranceStart(pauseRecognitionRunnable);
+//        responseServer.setOnUtteranceFinished(startRecognitionRunnable);
         responseServer.setReceivedMessage(recognizedTextBuffer);
         responseServer.respond();
     }
@@ -204,6 +210,11 @@ public class ExpThreeGroupTwo extends SpeechActivity {
     }
 
     @Override
+    protected void showThinkingState() {
+
+    }
+
+    @Override
     protected void showLoadingState() {
 
     }
@@ -216,11 +227,6 @@ public class ExpThreeGroupTwo extends SpeechActivity {
     @Override
     protected String getResponseServerUrl() {
         return "http://amandabot.xyz/game_response/";
-    }
-
-    @Override
-    protected long getResponseDelay() {
-        return 500;
     }
 
     //////////////////////////////////////////////
