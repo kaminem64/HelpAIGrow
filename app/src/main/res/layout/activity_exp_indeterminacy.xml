@@ -6,34 +6,35 @@
     android:layout_height="match_parent"
     tools:context="com.helpaigrow.ExpTwoGroupOneActivity">
 
-
-    <ImageView
-        android:id="@+id/lightBulb"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:layout_marginTop="48dp"
-        android:layout_marginBottom="64dp"
-        android:scaleType="centerInside"
-        app:layout_constraintBottom_toTopOf="@+id/nextButtonIndeterminacy"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="@+id/recognizedTextE2G1"
-        app:srcCompat="@drawable/light_bulb_off" />
-
     <ImageButton
         android:id="@+id/microphoneButtonE2G1"
         android:layout_width="55dp"
         android:layout_height="64dp"
         android:layout_centerHorizontal="true"
         android:layout_centerVertical="true"
-        android:layout_marginTop="16dp"
+        android:layout_marginTop="32dp"
         android:background="@android:color/transparent"
         android:contentDescription="@string/mic"
         android:scaleType="fitXY"
         android:src="@drawable/ic_mic_none_black_48dp"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toBottomOf="@id/hintText" />
+
+    <ImageView
+        android:id="@+id/lightBulb"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginBottom="8dp"
+        android:contentDescription="@string/lightBulbDesc"
+        android:scaleType="centerInside"
+        app:layout_constraintBottom_toTopOf="@+id/bulbText"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/recognizedTextE2G1"
+        app:srcCompat="@drawable/light_bulb_off" />
+
 
     <TextView
         android:id="@+id/recognizedTextE2G1"
@@ -42,34 +43,50 @@
         android:layout_marginStart="8dp"
         android:layout_marginTop="8dp"
         android:layout_marginEnd="8dp"
+        android:text="@string/speechRecognitionResult"
+        android:textAlignment="center"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/microphoneButtonE2G1" />
 
-    <Button
-        android:id="@+id/nextButtonIndeterminacy"
+
+    <TextView
+        android:id="@+id/bulbText"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
-        android:layout_marginEnd="8dp"
-        android:layout_marginBottom="8dp"
-        android:text="@string/proceed"
+        android:layout_height="19dp"
+        android:layout_marginBottom="16dp"
+        android:text="@string/firstLightBulb"
+        android:textAlignment="center"
+        android:textAppearance="@style/TextAppearance.AppCompat.Body1"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
 
     <TextView
-        android:id="@+id/bulbText"
+        android:id="@+id/hintTextDesc"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"
-        android:text="Light Bulb 1"
+        android:layout_marginTop="32dp"
+        android:text="@string/indeterminacyHintDesc"
+        android:textAlignment="viewStart"
         android:textAppearance="@style/TextAppearance.AppCompat.Body1"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/lightBulb" />
+        app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
+        android:id="@+id/hintText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="@string/indeterminacyHint"
+        android:textAlignment="center"
+        android:textAppearance="@style/TextAppearance.AppCompat.Medium"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/hintTextDesc" />
+
+        <TextView
         android:id="@+id/loadingWhiteTransparentIndeterminacy"
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"

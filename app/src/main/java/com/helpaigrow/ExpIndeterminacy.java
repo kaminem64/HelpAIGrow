@@ -2,9 +2,11 @@ package com.helpaigrow;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.media.AudioManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.ActivityCompat;
@@ -37,14 +39,6 @@ import java.util.ArrayList;
 public class ExpIndeterminacy extends SpeechActivity {
 
     protected String responseServerUrl = "http://amandabot.xyz/assistant_response/";
-    protected long responseDelay = 1000;
-
-    // Settings
-    public static final String USERSETTINGS = "PrefsFile";
-
-    private final String WAITING_FOR_SERVER = "Thinking ...";
-    private final String LISTENING_MESSAGE = "Listening ...";
-    private final String TALKING = "Amanda's talking ...";
 
     // Containers
     private ArrayList<String> recognizedTextBuffer;
@@ -54,10 +48,13 @@ public class ExpIndeterminacy extends SpeechActivity {
     protected TextView recognizedText;
     private ProgressBar spinner;
     private TextView loadingWhiteTransparent;
-    private Button nextButton;
     private ImageView imageView;
     private TextView bulbText;
     private int bulbNumber = 1;
+
+    private String conversationToken;
+
+
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     /**
@@ -71,7 +68,7 @@ public class ExpIndeterminacy extends SpeechActivity {
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
         final SharedPreferences settings = getSharedPreferences(USERSETTINGS, 0);
-        final String conversationToken = settings.getString("conversationToken", "");
+        conversationToken = settings.getString("conversationToken", "");
 
         imageView = findViewById(R.id.lightBulb);
         bulbText = findViewById(R.id.bulbText);
@@ -87,18 +84,14 @@ public class ExpIndeterminacy extends SpeechActivity {
 
         recognizedTextBuffer = new ArrayList<>();
 
-        nextButton = findViewById(R.id.nextButtonIndeterminacy);
-        nextButton.setVisibility(View.INVISIBLE);
-        nextButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                @SuppressLint("DefaultLocale") String query = String.format("conversation_token=%s&message=", conversationToken);
-                new FetchResponse().execute(query);
-            }
-        });
-
-        responseServer = new ResponseServer(this, responseServerCallback);
+        responseServer = new ResponseServer(this);
         responseServer.setResponseServerAddress(getResponseServerUrl());
+
+        AudioManager audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
+        assert audioManager != null;
+        audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, (audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC) * 3) / 4, 0);
+        audioManager.requestAudioFocus(null, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
+
     }
 
 
@@ -193,9 +186,12 @@ public class ExpIndeterminacy extends SpeechActivity {
 
     }
 
-    public void runCommand(int commandCode, int fulfillment, String responseParameter, String nextCommandHintText, boolean hasTriedAllCommands, boolean commandCompleted){
+    public void runCommand(int commandCode, int fulfillment, String responseParameter, String nextCommandHintText, boolean hasTriedAllCommands, boolean commandCompleted) {
         showStatus(false);
-        if(commandCompleted){nextButton.setVisibility(View.VISIBLE);}
+        if(commandCompleted){
+            @SuppressLint("DefaultLocale") String query = String.format("conversation_token=%s&message=", conversationToken);
+            new FetchResponse().execute(query);
+        }
         switch (commandCode) {
             // do nothing if something is already on/off or set | or just do anything we are asked
             case 100:
@@ -259,7 +255,6 @@ public class ExpIndeterminacy extends SpeechActivity {
             StringBuilder result = new StringBuilder();
             try {
                 String urlParameters = strings[0];
-//                Log.d("urlParameters", urlParameters);
                 URL url = new URL("http://amandabot.xyz/conversation_finished/");
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();
                 conn.setReadTimeout(10000);
@@ -274,7 +269,6 @@ public class ExpIndeterminacy extends SpeechActivity {
                 writer.close();
                 os.close();
                 int status = conn.getResponseCode();
-//                Log.d("Location", "HTTP STATUS: " + String.valueOf(status));
                 InputStream inputStream = conn.getInputStream();
                 BufferedReader in = new BufferedReader(new InputStreamReader(inputStream, "UTF-8"));
                 for (int c; (c = in.read()) >= 0;)
@@ -292,13 +286,18 @@ public class ExpIndeterminacy extends SpeechActivity {
             super.onPostExecute(result);
             try {
                 JSONObject resultJSON = new JSONObject(result);
-//                Log.d("ServerStat", "Created the JSON Obj");
                 JSONObject response = resultJSON.getJSONObject("response");
-//                Log.d("ServerStat", "Got response");
                 boolean success = response.getBoolean("success");
                 Log.d("ServerStat", "Got success");
                 if (success) {
-                    goToQuestions();
+                    pauseRecognition();
+                    new android.os.Handler().postDelayed(
+                            new Runnable() {
+                                public void run() {
+                                    goToQuestions();
+                                }
+                            },
+                            2500);
                 } else {
                     Toast.makeText(ExpIndeterminacy.this, "Server error!\nPlease try again later!", Toast.LENGTH_LONG).show();
                 }
@@ -310,6 +309,4 @@ public class ExpIndeterminacy extends SpeechActivity {
 
         }
     }
-
-
 }

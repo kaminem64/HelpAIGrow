@@ -1,9 +1,11 @@
 package com.helpaigrow;
 
 import android.Manifest;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.media.AudioManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
@@ -27,10 +29,6 @@ public class ExpOneActivity extends SpeechActivity {
     private boolean firstTimeShown = true;
 
     protected String responseServerUrl = "http://amandabot.xyz/response/";
-
-    private final String WAITING_FOR_SERVER = "Thinking ...";
-    private final String LISTENING_MESSAGE = "Listening ...";
-    private final String TALKING = "Amanda's talking ...";
 
     // Containers
     private ArrayList<String> recognizedTextBuffer;
@@ -70,8 +68,13 @@ public class ExpOneActivity extends SpeechActivity {
         recognizedText = findViewById(R.id.recognizedTextExp1);
         recognizedTextBuffer = new ArrayList<>();
 
-        responseServer = new ResponseServer(this, responseServerCallback);
+        responseServer = new ResponseServer(this);
         responseServer.setResponseServerAddress(getResponseServerUrl());
+
+        AudioManager audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
+        assert audioManager != null;
+        audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, (audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC) * 3) / 4, 0);
+        audioManager.requestAudioFocus(null, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
     }
 
     DialogInterface.OnClickListener dialogClickListener = new DialogInterface.OnClickListener() {

@@ -2,9 +2,11 @@ package com.helpaigrow;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.media.AudioManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.ActivityCompat;
@@ -34,7 +36,6 @@ import java.util.ArrayList;
 public class ExpTwoGroupOneActivity extends SpeechActivity {
 
     protected String responseServerUrl = "http://amandabot.xyz/assistant_response/";
-    protected long responseDelay = 1000;
 
     private Toast toastMessage;
     private Switch lightsSwitch;
@@ -42,13 +43,6 @@ public class ExpTwoGroupOneActivity extends SpeechActivity {
     private SeekBar acTemperature;
     private TextView time;
     private TextView hintText;
-
-    // Settings
-    public static final String USERSETTINGS = "PrefsFile";
-
-    private final String WAITING_FOR_SERVER = "Thinking ...";
-    private final String LISTENING_MESSAGE = "Listening ...";
-    private final String TALKING = "Amanda's talking ...";
 
     // Containers
     private ArrayList<String> recognizedTextBuffer;
@@ -114,10 +108,13 @@ public class ExpTwoGroupOneActivity extends SpeechActivity {
             }
         });
 
-        responseServer = new ResponseServer(this, responseServerCallback);
+        responseServer = new ResponseServer(this);
         responseServer.setResponseServerAddress(getResponseServerUrl());
-//        responseServer.setOnUtteranceStart(pauseRecognitionRunnable);
-//        responseServer.setOnUtteranceFinished(startRecognitionRunnable);
+
+        AudioManager audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
+        assert audioManager != null;
+        audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, (audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC) * 3) / 4, 0);
+        audioManager.requestAudioFocus(null, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
     }
 
 

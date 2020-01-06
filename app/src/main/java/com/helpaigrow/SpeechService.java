@@ -225,7 +225,7 @@ public class SpeechService extends Service {
         SpeechContext.Builder speechBuilder = SpeechContext.newBuilder();
         speechBuilder.addPhrases("Amanda");
         speechBuilder.addPhrases("alarm");
-        speechBuilder.addPhrases("lights");
+        speechBuilder.addPhrases("light");
         speechBuilder.addPhrases("AC");
         speechBuilder.addPhrases("turn on");
         speechBuilder.addPhrases("turn off");
@@ -299,7 +299,7 @@ public class SpeechService extends Service {
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
-    // Everything under this line is related to Google credentials /////////////////////////////////
+    // Everything under this line is related to Google credential /////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////////////////////
     private static final String PREFS = "SpeechService";
     private static final String PREF_ACCESS_TOKEN_VALUE = "access_token_value";

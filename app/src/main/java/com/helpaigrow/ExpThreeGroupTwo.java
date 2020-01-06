@@ -1,8 +1,10 @@
 package com.helpaigrow;
 
 import android.Manifest;
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.Point;
+import android.media.AudioManager;
 import android.os.Bundle;
 import android.support.v4.app.ActivityCompat;
 import android.util.Log;
@@ -72,6 +74,10 @@ public class ExpThreeGroupTwo extends SpeechActivity {
         recognizedText = findViewById(R.id.recognizedTextExp3);
         recognizedTextBuffer = new ArrayList<>();
 
+        AudioManager audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
+        assert audioManager != null;
+        audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, (audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC) * 3) / 4, 0);
+        audioManager.requestAudioFocus(null, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
     }
     @Override
     public void onBackPressed() {
@@ -103,7 +109,7 @@ public class ExpThreeGroupTwo extends SpeechActivity {
         } else {
             ActivityCompat.requestPermissions(getActivity(), new String[]{Manifest.permission.RECORD_AUDIO}, REQUEST_RECORD_AUDIO_PERMISSION);
         }
-        responseServer = new ResponseServer(this, responseServerCallback);
+        responseServer = new ResponseServer(this);
         responseServer.setResponseServerAddress(getResponseServerUrl());
         startGameThread = new startTheGame();
         startGameThread.start();
@@ -141,7 +147,7 @@ public class ExpThreeGroupTwo extends SpeechActivity {
             synchronized (mLock) {
 //                responseServer.setOnUtteranceStart(pauseRecognitionRunnable);
 //                responseServer.setOnUtteranceFinished(startGameRunnable);
-                responseServer.speak("Hi! In this game you need to collect points by tapping on the circles while answering questions that I ask. You shall not stop tapping on circles while answering the questions. Good luck!", false);
+                responseServer.speak("Hi! In this game you need to collect points by tapping on the circles while answering questions that I ask. You shall not stop tapping on circles while answering the questions. Good luck!", false, false, false, "");
             }
         }
     }
@@ -186,7 +192,7 @@ public class ExpThreeGroupTwo extends SpeechActivity {
     protected void finalizedRecognizedText(String text) {
         recognizedText.setText(text);
         recognizedTextBuffer.add(text);
-        ResponseServer responseServer = new ResponseServer(this, responseServerCallback);
+        ResponseServer responseServer = new ResponseServer(this);
         responseServer.setResponseServerAddress(getResponseServerUrl());
 //        responseServer.setOnUtteranceStart(pauseRecognitionRunnable);
 //        responseServer.setOnUtteranceFinished(startRecognitionRunnable);

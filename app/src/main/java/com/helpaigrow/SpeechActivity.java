@@ -6,19 +6,25 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.media.AudioManager;
+import android.media.MediaPlayer;
 import android.os.IBinder;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
 import android.util.Log;
-
-import java.io.BufferedOutputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.Objects;
 
 public abstract class SpeechActivity extends AppCompatActivity implements MessageDialogFragment.Listener {
+
+    // Settings
+    public static final String USERSETTINGS = "PrefsFile";
+
+    protected final String WAITING_FOR_SERVER = "Thinking ...";
+    protected final String LISTENING_MESSAGE = "Listening ...";
+    protected final String TALKING = "Amanda's talking ...";
 
     protected boolean isTimedResponse = false;
 
@@ -27,7 +33,6 @@ public abstract class SpeechActivity extends AppCompatActivity implements Messag
     protected static final int REQUEST_RECORD_AUDIO_PERMISSION = 1;
 
     final Object mLock = new Object();
-    public static final String USERSETTINGS = "PrefsFile";
     public String uniqueID;
     public int conversationTurn;
 
@@ -47,26 +52,39 @@ public abstract class SpeechActivity extends AppCompatActivity implements Messag
     //Voice Recorder
     protected VoiceRecorder mVoiceRecorder;
 
+    // Media Player
+    protected MediaPlayer mediaPlayer;
+
     // Audio Saver
     protected SaveAudio saveAudio;
 
     // Abstract Methods
     protected abstract void runCommand(int commandCode, int fulfillment, String responseParameter, String nextCommandHintText, boolean hasTriedAllCommands, boolean commandCompleted);
+
     protected abstract void goToQuestions();
+
     protected abstract void saveUtterance(String utterance);
+
     protected abstract void finalizedRecognizedText(String text);
+
     protected abstract void unFinalizedRecognizedText(String text);
+
     protected abstract void showListeningState(boolean hearingVoice);
+
     protected abstract void showTalkingState();
+
     protected abstract void showThinkingState();
+
     protected abstract void showLoadingState();
+
     protected abstract SpeechActivity getActivity();
+
     protected abstract String getResponseServerUrl();
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     /**
-    Silent Timer
+     * Silent Timer
      */
     private TimedResponse timedResponse;
 
@@ -105,16 +123,16 @@ public abstract class SpeechActivity extends AppCompatActivity implements Messag
                         final long now = System.currentTimeMillis();
                         if (!isTalking) {
                             if (lastUtterance != 0 && (now - lastUtterance > SILENT_THRESHOLD) && isSpeechFinalized) {
-                                Log.d("SpeechService", "" + (now - lastUtterance)/1000);
+                                Log.d("SpeechService", "" + (now - lastUtterance) / 1000);
                                 showStatusIsThinking();
-                                if (mSpeechService != null) {
-                                    mSpeechService.finishRecognizing();
-                                }
-                                pauseRecognition();
                                 if (saveAudio != null) {
                                     saveAudio.closeFile();
                                     new Thread(saveAudio).start();
                                 }
+                                if (mSpeechService != null) {
+                                    mSpeechService.finishRecognizing();
+                                }
+                                pauseRecognition();
                                 lastUtterance = 0;
                                 responseServer.respond();
                             }
@@ -141,24 +159,6 @@ public abstract class SpeechActivity extends AppCompatActivity implements Messag
             timedResponse = null;
         }
     }
-
-    protected final ResponseServer.Callback responseServerCallback = new ResponseServer.Callback() {
-        @Override
-        public void onUtteranceStart() {
-            if (isTimedResponse) {
-                stopTimedResponse();
-            }
-            pauseRecognition();
-        }
-
-        @Override
-        public void onUtteranceFinished() {
-            startRecognition();
-            if (isTimedResponse) {
-                startTimedResponse();
-            }
-        }
-    };
 
     /**
      * Voice Recorder
@@ -192,7 +192,7 @@ public abstract class SpeechActivity extends AppCompatActivity implements Messag
         }
 
         @Override
-        public void areOtherServicesReady(){
+        public void areOtherServicesReady() {
             if (mSpeechService != null) {
                 mVoiceRecorder.setOtherServicesReady(mSpeechService.isServiceReady());
             }
@@ -224,26 +224,25 @@ public abstract class SpeechActivity extends AppCompatActivity implements Messag
     }
 
 
-    protected void pauseRecognition(){
+    protected void pauseRecognition() {
         try {
             // Stop listening to voice
             stopVoiceRecorder();
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             Log.d("pauseRecognition", "stopVoiceRecorder() failed.");
         }
         try {
             // Stop listening to voice
             mSpeechService.removeListener(mSpeechServiceListener);
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             Log.d("pauseRecognition", "mSpeechService.removeListener(mSpeechServiceListener) failed.");
         }
         isSpeechServiceRunning = false;
         isTalking = true;
         showStatus(false);
     }
-    protected void startRecognition(){
+
+    protected void startRecognition() {
         try {
             // Start listening to voices
             startVoiceRecorder();
@@ -258,8 +257,7 @@ public abstract class SpeechActivity extends AppCompatActivity implements Messag
             String filePath = Objects.requireNonNull(getActivity().getExternalCacheDir()).getAbsolutePath() +
                     "/" + uniqueID + "_" + conversationTurn + "___" + System.currentTimeMillis() / 1000 + ".wav";
             saveAudio = new SaveAudio(mVoiceRecorder.getCHANNEL(), mVoiceRecorder.getSampleRate(), mVoiceRecorder.getENCODING(), filePath);
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
         try {
@@ -282,30 +280,33 @@ public abstract class SpeechActivity extends AppCompatActivity implements Messag
         @Override
         public void onSpeechRecognized(final String text, final boolean isFinal) {
             if (isFinal) {
-                if (mVoiceRecorder != null) {mVoiceRecorder.dismiss();}
-            }
-            if (!TextUtils.isEmpty(text)) {runOnUiThread(new Runnable() { //mText != null &&
-                @Override
-                public void run() {
-                    try {
-                        if (isFinal) {
-                            finalizedRecognizedText(text);
-                            isSpeechFinalized = true;
-                        } else {
-                            unFinalizedRecognizedText(text);
-                            isSpeechFinalized = false;
-                        }
-                        lastUtterance = System.currentTimeMillis();
-                    } catch (Exception e) {
-                        Log.d("SpeechService", "Listener stopped because some objects are null.");
-                    }
+                if (mVoiceRecorder != null) {
+                    mVoiceRecorder.dismiss();
                 }
-            });
+            }
+            if (!TextUtils.isEmpty(text)) {
+                runOnUiThread(new Runnable() { //mText != null &&
+                    @Override
+                    public void run() {
+                        try {
+                            if (isFinal) {
+                                finalizedRecognizedText(text);
+                                isSpeechFinalized = true;
+                            } else {
+                                unFinalizedRecognizedText(text);
+                                isSpeechFinalized = false;
+                            }
+                            lastUtterance = System.currentTimeMillis();
+                        } catch (Exception e) {
+                            Log.d("SpeechService", "Listener stopped because some objects are null.");
+                        }
+                    }
+                });
             }
         }
     };
 
-    protected void onSpeechServiceReady(){
+    protected void onSpeechServiceReady() {
         startSpeechDependentService();
         showStatus(false);
     }
@@ -322,26 +323,26 @@ public abstract class SpeechActivity extends AppCompatActivity implements Messag
                 // We can later optimize this part but for now we want to make sure that we are handling everything
                 try {
                     ismApiWorking = mSpeechService.isServiceReady();
-                } catch (Exception e){
+                } catch (Exception e) {
                     ismApiWorking = false;
                     isSpeechServiceRunning = false;
                 }
                 if (isSpeechServiceRunning) {
-                    if(ismApiWorking){
-                        if(isTalking){
+                    if (ismApiWorking) {
+                        if (isTalking) {
                             showTalkingState();
                         } else {
                             showListeningState(hearingVoice);
                         }
                     } else {
-                        if(isTalking){
+                        if (isTalking) {
                             showTalkingState();
                         } else {
                             showLoadingState();
                         }
                     }
                 } else {
-                    if(isTalking){
+                    if (isTalking) {
                         showTalkingState();
                     } else {
                         showLoadingState();
@@ -357,8 +358,8 @@ public abstract class SpeechActivity extends AppCompatActivity implements Messag
             @Override
             public void run() {
                 showThinkingState();
-        }
-    });
+            }
+        });
     }
 
 
@@ -393,8 +394,9 @@ public abstract class SpeechActivity extends AppCompatActivity implements Messag
         // Prepare Cloud Speech API
         bindService(new Intent(getActivity(), SpeechService.class), mSpeechServiceConnection, BIND_AUTO_CREATE);
     }
+
     protected void unBindSpeechService() {
-        if(isSpeechServiceBound) {
+        if (isSpeechServiceBound) {
             try {
                 // Stop Cloud Speech API
                 mSpeechService.removeListener(mSpeechServiceListener);
@@ -436,4 +438,83 @@ public abstract class SpeechActivity extends AppCompatActivity implements Messag
     public void onMessageDialogDismissed() {
         ActivityCompat.requestPermissions(getActivity(), new String[]{Manifest.permission.RECORD_AUDIO}, REQUEST_RECORD_AUDIO_PERMISSION);
     }
+
+    /**
+     * Media player
+     */
+
+    private void setupNewMediaPlayer() {
+        mediaPlayer = new MediaPlayer();
+        mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
+        mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+            @Override
+            public void onCompletion(MediaPlayer mp) {
+                mp.release();
+                setupNewMediaPlayer();
+                startRecognition();
+                if (isTimedResponse) {
+                    startTimedResponse();
+                }
+            }
+        });
+        mediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+            @Override
+            public void onPrepared(MediaPlayer mp) {
+                if (isTimedResponse) {
+                    stopTimedResponse();
+                }
+                pauseRecognition();
+                mp.start();
+            }
+        });
+        mediaPlayer.setOnErrorListener(new MediaPlayer.OnErrorListener() {
+            @Override
+            public boolean onError(MediaPlayer mp, int what, int extra) {
+                return false;
+            }
+        });
+    }
+
+    public void stopMediaPlayer() {
+        if (mediaPlayer != null) {
+            try {
+                mediaPlayer.stop();
+                mediaPlayer.release();
+                mediaPlayer = null;
+            } catch (Exception ignore) {
+            }
+        }
+    }
+
+
+    public void playPollySound(String url, final String finalUtterance, boolean isFinished) {
+        // Create a media player to play the synthesized audio stream.
+        setupNewMediaPlayer();
+
+        if (isFinished) {
+            mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+                @Override
+                public void onCompletion(MediaPlayer mp) {
+                    mp.release();
+                    saveUtterance(finalUtterance);
+                    new android.os.Handler().postDelayed(
+                            new Runnable() {
+                                public void run() {
+                                    goToQuestions();
+                                }
+                            },
+                            2000);
+                }
+            });
+        }
+        try {
+            // Set media player's data source to previously obtained URL.
+            mediaPlayer.setDataSource(url);
+        } catch (IOException e) {
+            Log.e("Polly", "Unable to set data source for the media player! " + e.getMessage());
+        }
+        // Start the playback asynchronously (since the data source is a network stream).
+        mediaPlayer.prepareAsync();
+    }
+
 }

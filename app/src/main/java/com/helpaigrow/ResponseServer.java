@@ -1,12 +1,7 @@
 package com.helpaigrow;
 
 import android.annotation.SuppressLint;
-import android.content.Context;
 import android.content.SharedPreferences;
-import android.media.AudioManager;
-import android.media.MediaPlayer;
-import android.os.AsyncTask;
-import android.support.annotation.NonNull;
 import android.text.TextUtils;
 import android.util.Log;
 import com.amazonaws.auth.CognitoCachingCredentialsProvider;
@@ -27,69 +22,53 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
-public class ResponseServer {
+class ResponseServer {
 
+    private final ExecutorService executorService;
     private String finalUtterance;
 
     // Amazon Polly
     private static final String COGNITO_POOL_ID = "us-east-1:b0f94da1-d234-47cb-b191-3b525641ae79";
     private static final Regions MY_REGION = Regions.US_EAST_1;
     private CognitoCachingCredentialsProvider credentialsProvider;
-    private AmazonPollyPresigningClient client;
-    private MediaPlayer mediaPlayer;
+    private static AmazonPollyPresigningClient client;
 
     private String responseServerAddress;
-    private AsyncTask<Void, Void, Void> speakingAgent;
+    private Thread speakingAgent;
 
     // Settings
     private static final String USERSETTINGS = "PrefsFile";
     private final SharedPreferences settings;
 
     private String conversationToken;
-    private String voicePersona;
+    private static String voicePersona;
     private SpeechActivity activity;
     private ArrayList<String> receivedMessage;
-    private AudioManager audioManager;
 
 
-    private Callback responseServerCallback;
 
-
-    public static abstract class Callback {
-
-        public void onUtteranceStart() {
-        }
-
-        public void onUtteranceFinished() {
-        }
-
-    }
-
-    ResponseServer(SpeechActivity activity, @NonNull Callback callback) {
+    ResponseServer(SpeechActivity activity) {
 
         this.activity = activity;
-        this.responseServerCallback = callback;
 
         // Restore preferences
         settings = activity.getSharedPreferences(USERSETTINGS, 0);
         conversationToken = settings.getString("conversationToken", "");
         voicePersona = settings.getString("voicePersona", "Joanna");
 
-        audioManager = (AudioManager)activity.getSystemService(Context.AUDIO_SERVICE);
-        assert audioManager != null;
-        audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, (audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)*3)/4 , 0);
+        executorService = Executors.newFixedThreadPool(10);
 
         initPollyClient();
-        setupNewMediaPlayer();
-    }
-
-    public void setActivity(SpeechActivity activity){
-        this.activity = activity;
     }
 
     private void initPollyClient() {
-        // Initialize the Amazon Cognito credentials provider.
+        // Initialize the Amazon Cognito credential provider.
         credentialsProvider = new CognitoCachingCredentialsProvider(
                 this.activity.getApplicationContext(),
                 COGNITO_POOL_ID,
@@ -100,38 +79,7 @@ public class ResponseServer {
         client = new AmazonPollyPresigningClient(credentialsProvider);
     }
 
-    private void setupNewMediaPlayer() {
-        mediaPlayer = new MediaPlayer();
-
-
-        // Request audio focus for playback
-        audioManager.requestAudioFocus(null, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
-
-        mediaPlayer.setVolume(1,1);
-        mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
-            @Override
-            public void onCompletion(MediaPlayer mp) {
-                mp.release();
-                setupNewMediaPlayer();
-                ResponseServer.this.responseServerCallback.onUtteranceFinished();
-            }
-        });
-        mediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
-            @Override
-            public void onPrepared(MediaPlayer mp) {
-                ResponseServer.this.responseServerCallback.onUtteranceStart();
-                mp.start();
-            }
-        });
-        mediaPlayer.setOnErrorListener(new MediaPlayer.OnErrorListener() {
-            @Override
-            public boolean onError(MediaPlayer mp, int what, int extra) {
-                return false;
-            }
-        });
-    }
-
-    public void setResponseServerAddress(String responseServerAddress) {
+    void setResponseServerAddress(String responseServerAddress) {
         this.responseServerAddress = responseServerAddress;
     }
 
@@ -139,33 +87,23 @@ public class ResponseServer {
 
     /**
      * Client accessible methods
-     * @param text The text to be spoken
+     *
+     * @param text       The text to be spoken
      * @param isFinished The status
      */
-    public void speak(String text, boolean isFinished, boolean isSSML, boolean isNeural, String region) {
-        speakingAgent = new Speak(text, isFinished, isSSML, isNeural, region);
-        speakingAgent.execute();
+    void speak(String text, boolean isFinished, boolean isSSML, boolean isNeural, String region) {
+        speakingAgent = new Thread(new Speak(text, isFinished, isSSML, isNeural, region));
+        executorService.submit(speakingAgent);
         this.flushReceivedMessage();
     }
 
-    public void speak(String text, boolean isFinished) {
-        speakingAgent = new Speak(text, isFinished);
-        speakingAgent.execute();
-        this.flushReceivedMessage();
-    }
 
-    public void stopSpeaking() {
+    void stopSpeaking() {
         if (speakingAgent != null) {
-            speakingAgent.cancel(true);
+            speakingAgent.interrupt();
             speakingAgent = null;
         }
-        if(mediaPlayer != null) {
-            try {
-                mediaPlayer.stop();
-                mediaPlayer.release();
-                mediaPlayer = null;
-            } catch (Exception ignore){}
-        }
+        activity.stopMediaPlayer();
     }
 
     private String prepareQuery() {
@@ -182,8 +120,14 @@ public class ResponseServer {
         return query;
     }
 
-    public void respond() {
-        new FetchResponse().execute(prepareQuery());
+    void respond() {
+        FetchResponse task = new FetchResponse(prepareQuery());
+        Future<String> future = executorService.submit(task);
+        try {
+            executorService.submit(new Thread(new ProcessResponse(future.get())));
+        } catch (InterruptedException | ExecutionException e) {
+            e.printStackTrace();
+        }
     }
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -196,20 +140,19 @@ public class ResponseServer {
         return receivedMessage;
     }
 
-    public void setReceivedMessage(ArrayList<String> receivedMessage) {
+    void setReceivedMessage(ArrayList<String> receivedMessage) {
         Log.d("Location", "setReceivedMessage");
         this.receivedMessage = receivedMessage;
     }
+
     private void flushReceivedMessage() {
         Log.d("Location", "flushReceivedMessage");
-        if(this.receivedMessage != null) {
+        if (this.receivedMessage != null) {
             this.receivedMessage.clear();
         }
     }
 
-
-    @SuppressLint("StaticFieldLeak")
-    private class Speak extends AsyncTask<Void, Void, Void> {
+    private class Speak implements Runnable {
         String textToRead;
         boolean isFinished;
         boolean isSSML;
@@ -217,17 +160,6 @@ public class ResponseServer {
         String region;
         String textType;
         String engine;
-
-        Speak(String textToRead, boolean isFinished) {
-            this.textToRead = textToRead;
-            this.isFinished = isFinished;
-            this.isSSML = false;
-            this.isNeural = false;
-            this.region = "NA";
-            textType = "text";
-            engine = "standard";
-
-        }
 
         Speak(String textToRead, boolean isFinished, boolean isSSML, boolean isNeural, String region) {
             this.isFinished = isFinished;
@@ -250,7 +182,7 @@ public class ResponseServer {
         }
 
         @Override
-        protected Void doInBackground(Void... voids) {
+        public void run() {
             try {
                 // Create speech synthesis request.
                 SynthesizeSpeechPresignRequest synthesizeSpeechPresignRequest =
@@ -269,45 +201,25 @@ public class ResponseServer {
                         client.getPresignedSynthesizeSpeechUrl(synthesizeSpeechPresignRequest);
                 Log.i("Polly", "Received speech presigned URL: " + presignedSynthesizeSpeechUrl);
 
-                // Create a media player to play the synthesized audio stream.
-                if (mediaPlayer.isPlaying()) {
-                    setupNewMediaPlayer();
-                    Log.i("Polly", "Created a new media player");
-                }
-                if(this.isFinished) {
-                    mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
-                        @Override
-                        public void onCompletion(MediaPlayer mp) {
-                            mp.release();
-                            activity.saveUtterance(finalUtterance);
-                            activity.goToQuestions();
-                        }
-                    });
-                }
-                try {
-                    // Set media player's data source to previously obtained URL.
-                    mediaPlayer.setDataSource(presignedSynthesizeSpeechUrl.toString());
-                } catch (IOException e) {
-                    Log.e("Polly", "Unable to set data source for the media player! " + e.getMessage());
-                }
-                // Start the playback asynchronously (since the data source is a network stream).
-                mediaPlayer.prepareAsync();
-            } catch (Exception e) {
+                activity.playPollySound(presignedSynthesizeSpeechUrl.toString(), finalUtterance, isFinished);
+            }
+            catch (Exception e) {
                 Log.d("Polly Service", "Media player stopped because some objects are null.");
             }
-
-            return null;
         }
     }
 
-    @SuppressLint("StaticFieldLeak")
-    private class FetchResponse extends AsyncTask<String, Integer, String> {
+    private class FetchResponse implements Callable<String> {
+        String urlParameters;
+
+        FetchResponse(String urlParameters) {
+            this.urlParameters = urlParameters;
+        }
 
         @Override
-        protected String doInBackground(String... strings) {
+        public String call() {
             StringBuilder result = new StringBuilder();
             try {
-                String urlParameters = strings[0];
                 Log.d("urlParameters", urlParameters);
                 URL url = new URL(responseServerAddress);
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();
@@ -326,54 +238,54 @@ public class ResponseServer {
                 Log.d("Location", "HTTP STATUS: " + String.valueOf(status));
                 InputStream inputStream = conn.getInputStream();
                 BufferedReader in = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8));
-                for (int c; (c = in.read()) >= 0;)
-                    result.append((char)c);
+                for (int c; (c = in.read()) >= 0; )
+                    result.append((char) c);
             } catch (IOException e) {
                 Log.d("Location", "IOException");
                 e.printStackTrace();
             }
             return result.toString();
         }
+    }
+
+    private class ProcessResponse implements Runnable {
+        String result;
+
+        ProcessResponse(String result){
+            this.result = result;
+        }
 
         @Override
-        protected void onPostExecute(String result) {
-            super.onPostExecute(result);
+        public void run() {
             try {
                 JSONObject resultJSON = new JSONObject(result);
-//                Log.d("ServerStat", "Created the JSON Obj");
                 JSONObject response = resultJSON.getJSONObject("response");
-//                Log.d("ServerStat", "Got response");
                 String responseText = response.getString("message");
-//                Log.d("ServerStat", "Got sentence");
                 boolean isFinished = response.getBoolean("is_finished");
-//                Log.d("ServerStat", "Got is_finished");
                 boolean isSSML = response.getBoolean("is_ssml");
-//                Log.d("ServerStat", "Got is_ssml");
                 boolean isNeural = response.getBoolean("is_neural");
-//                Log.d("ServerStat", "Got is_neural");
                 String region = response.getString("region");
-//                Log.d("ServerStat", "Got region");
                 int conversationTurn = 0;
                 try {
                     conversationTurn = response.getInt("conversation_turn");
-//                    Log.d("ServerStat", "Got conversation_turn");
-                } catch (Exception ignored) {}
-                int responseCode = response.getInt("response_code");
-//                Log.d("ServerStat", "Got response_code");
-                int fulfillment = response.getInt("fulfillment");
-//                Log.d("ServerStat", "Got fulfillment");
-                if (responseCode != 0) {
-                    boolean commandCompleted = response.getBoolean("command_completed");
-//                    Log.d("ServerStat", "Got command_completed");
-                    String responseParameter = response.getString("response_parameter");
-//                    Log.d("ServerStat", "Got response parameter");
-                    String nextCommandHintText = response.getString("next_command_hint_text");
-//                    Log.d("ServerStat", "Got next_command_hint_text");
-                    boolean hasTriedAllCommands = response.getBoolean("has_tried_all_commands");
-//                    Log.d("ServerStat", "Got has_tried_all_commands");
-                    activity.runCommand(responseCode, fulfillment, responseParameter, nextCommandHintText, hasTriedAllCommands, commandCompleted);
+                } catch (Exception ignored) {
                 }
-                if(!responseText.equals("")){
+                final int responseCode = response.getInt("response_code");
+                final int fulfillment = response.getInt("fulfillment");
+                if (responseCode != 0) {
+                    final boolean commandCompleted = response.getBoolean("command_completed");
+                    final String responseParameter = response.getString("response_parameter");
+                    final String nextCommandHintText = response.getString("next_command_hint_text");
+                    final boolean hasTriedAllCommands = response.getBoolean("has_tried_all_commands");
+                    // Running UI on a separate thread let's the voice to load much faster
+                    activity.runOnUiThread(new Runnable() { //mText != null &&
+                        @Override
+                        public void run() {
+                            activity.runCommand(responseCode, fulfillment, responseParameter, nextCommandHintText, hasTriedAllCommands, commandCompleted);
+                        }
+                    });
+                }
+                if (!responseText.equals("")) {
                     speak(responseText, isFinished, isSSML, isNeural, region);
                     if (conversationTurn != 0) {
                         SharedPreferences.Editor editor = settings.edit();
@@ -384,7 +296,7 @@ public class ResponseServer {
             } catch (JSONException e) {
                 e.printStackTrace();
                 Log.d("ServerStat", e.toString());
-                speak("Please check your Internet connection.", false);
+                speak("Please check your Internet connection.", false, false, false, "");
             }
         }
     }

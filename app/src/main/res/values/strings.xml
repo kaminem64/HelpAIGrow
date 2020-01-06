@@ -21,4 +21,9 @@
     <string name="expIDMessage">Please enter the experiment ID below:</string>
     <string name="logoText">AI</string>
     <string name="oneClickProblemReport">One-Click Problem Report</string>
+    <string name="indeterminacyHintDesc">Please try only the following command 10 times.\n(DO NOT TRY ANY VARIATIONS OF THIS COMMAND)</string>
+    <string name="firstLightBulb">Light Bulb 1</string>
+    <string name="speechRecognitionResult">Listening …</string>
+    <string name="lightBulbDesc">Light Bulb</string>
+    <string name="indeterminacyHint">Amanda turn on the light</string>
 </resources>
