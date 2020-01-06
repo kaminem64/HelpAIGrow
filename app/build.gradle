@@ -11,7 +11,7 @@ android {
         applicationId "com.kaminem64.amanda"
         minSdkVersion 19
         targetSdkVersion 29
-        versionCode 17
+        versionCode 19
         versionName "2.01"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
         multiDexEnabled true
@@ -66,9 +66,9 @@ dependencies {
     implementation("com.squareup.okhttp3:okhttp:4.3.0")
 
     // AWS
+
     def aws_version = "2.16.+"
     implementation "com.amazonaws:aws-android-sdk-polly:$aws_version"
-
     // Support libraries
     // Support libraries
     implementation fileTree(dir: 'libs', include: ['*.jar'])

@@ -147,7 +147,8 @@ public class ExpThreeGroupTwo extends SpeechActivity {
             synchronized (mLock) {
 //                responseServer.setOnUtteranceStart(pauseRecognitionRunnable);
 //                responseServer.setOnUtteranceFinished(startGameRunnable);
-                responseServer.speak("Hi! In this game you need to collect points by tapping on the circles while answering questions that I ask. You shall not stop tapping on circles while answering the questions. Good luck!", false, false, false, "");
+                // TODO: need to use new speak methods
+//                responseServer.speak("Hi! In this game you need to collect points by tapping on the circles while answering questions that I ask. You shall not stop tapping on circles while answering the questions. Good luck!", false, false, false, "");
             }
         }
     }

@@ -153,8 +153,17 @@ public class AuthActivity extends AppCompatActivity {
                 String text1;
                 if(success){
                     switch(appExperimentCode){
+                        case 0:
+                            goToNextPage[0] = new Intent(AuthActivity.this, WelcomeActivity.class);
+                            break;
                         case 10:
+                            goToNextPage[0] = new Intent(AuthActivity.this, ConsentFormActivity.class);
+                            goToNextPage[0].putExtra("experimentClass","com.helpaigrow.ExpOneActivity");
+                            break;
                         case 11:
+                            goToNextPage[0] = new Intent(AuthActivity.this, ConsentFormActivity.class);
+                            goToNextPage[0].putExtra("experimentClass","com.helpaigrow.ExpOneActivity");
+                            break;
                         case 12:
                             goToNextPage[0] = new Intent(AuthActivity.this, ConsentFormActivity.class);
                             goToNextPage[0].putExtra("experimentClass","com.helpaigrow.ExpOneActivity");

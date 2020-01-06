@@ -168,11 +168,11 @@ public class ExpOneActivity extends SpeechActivity {
         super.onStop();
     }
 
-//    @Override
-//    protected void onDestroy() {
-//        super.onDestroy();
-//        unBindSpeechService();
-//    }
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        unBindSpeechService();
+    }
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     @Override

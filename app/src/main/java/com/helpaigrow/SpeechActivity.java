@@ -250,10 +250,6 @@ public abstract class SpeechActivity extends AppCompatActivity implements Messag
             Log.d("startRecognition", "startVoiceRecorder() failed.");
         }
         try {
-            SharedPreferences settings = getSharedPreferences(USERSETTINGS, 0);
-            uniqueID = settings.getString("uniqueID", "NotSpecified");
-            conversationTurn = settings.getInt("conversationTurn", 1);
-
             String filePath = Objects.requireNonNull(getActivity().getExternalCacheDir()).getAbsolutePath() +
                     "/" + uniqueID + "_" + conversationTurn + "___" + System.currentTimeMillis() / 1000 + ".wav";
             saveAudio = new SaveAudio(mVoiceRecorder.getCHANNEL(), mVoiceRecorder.getSampleRate(), mVoiceRecorder.getENCODING(), filePath);
@@ -352,6 +348,9 @@ public abstract class SpeechActivity extends AppCompatActivity implements Messag
         });
     }
 
+    protected void setConversationTurn(int turn){
+        this.conversationTurn = turn;
+    }
 
     protected void showStatusIsThinking() {
         runOnUiThread(new Runnable() {
@@ -444,6 +443,10 @@ public abstract class SpeechActivity extends AppCompatActivity implements Messag
      */
 
     private void setupNewMediaPlayer() {
+        if(mediaPlayer != null) {
+            mediaPlayer.release();
+            mediaPlayer = null;
+        }
         mediaPlayer = new MediaPlayer();
         mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
         mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {

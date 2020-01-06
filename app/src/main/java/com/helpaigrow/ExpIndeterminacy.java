@@ -148,6 +148,12 @@ public class ExpIndeterminacy extends SpeechActivity {
         unBindSpeechService();
     }
 
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        unBindSpeechService();
+    }
+
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     @Override
     protected SpeechActivity getActivity() {

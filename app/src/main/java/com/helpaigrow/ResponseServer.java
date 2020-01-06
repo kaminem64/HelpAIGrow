@@ -4,12 +4,14 @@ import android.annotation.SuppressLint;
 import android.content.SharedPreferences;
 import android.text.TextUtils;
 import android.util.Log;
+
 import com.amazonaws.auth.CognitoCachingCredentialsProvider;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.polly.AmazonPollyPresigningClient;
 import com.amazonaws.services.polly.model.OutputFormat;
 import com.amazonaws.services.polly.model.Engine;
 import com.amazonaws.services.polly.model.SynthesizeSpeechPresignRequest;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 import java.io.BufferedReader;
@@ -22,11 +24,13 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+
 
 class ResponseServer {
 
@@ -34,13 +38,10 @@ class ResponseServer {
     private String finalUtterance;
 
     // Amazon Polly
-    private static final String COGNITO_POOL_ID = "us-east-1:b0f94da1-d234-47cb-b191-3b525641ae79";
-    private static final Regions MY_REGION = Regions.US_EAST_1;
-    private CognitoCachingCredentialsProvider credentialsProvider;
     private static AmazonPollyPresigningClient client;
 
     private String responseServerAddress;
-    private Thread speakingAgent;
+    private Future<String> speakingAgent;
 
     // Settings
     private static final String USERSETTINGS = "PrefsFile";
@@ -51,8 +52,6 @@ class ResponseServer {
     private SpeechActivity activity;
     private ArrayList<String> receivedMessage;
 
-
-
     ResponseServer(SpeechActivity activity) {
 
         this.activity = activity;
@@ -62,45 +61,67 @@ class ResponseServer {
         conversationToken = settings.getString("conversationToken", "");
         voicePersona = settings.getString("voicePersona", "Joanna");
 
-        executorService = Executors.newFixedThreadPool(10);
+        executorService = Executors.newFixedThreadPool(100);
 
         initPollyClient();
     }
 
+
     private void initPollyClient() {
-        // Initialize the Amazon Cognito credential provider.
-        credentialsProvider = new CognitoCachingCredentialsProvider(
-                this.activity.getApplicationContext(),
-                COGNITO_POOL_ID,
-                MY_REGION
+        CognitoCachingCredentialsProvider credentialsProvider = new CognitoCachingCredentialsProvider(
+                activity,
+                "us-east-1:fc6c9972-5172-4538-a1b2-5c46b097002a", // Identity pool ID
+                Regions.US_EAST_1 // Region
         );
-
-        // Create a client that supports generation of presigned URLs.
         client = new AmazonPollyPresigningClient(credentialsProvider);
-    }
-
-    void setResponseServerAddress(String responseServerAddress) {
-        this.responseServerAddress = responseServerAddress;
     }
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    /**
-     * Client accessible methods
-     *
-     * @param text       The text to be spoken
-     * @param isFinished The status
-     */
-    void speak(String text, boolean isFinished, boolean isSSML, boolean isNeural, String region) {
-        speakingAgent = new Thread(new Speak(text, isFinished, isSSML, isNeural, region));
-        executorService.submit(speakingAgent);
+
+    void respond() {
+        FetchResponse fetchResponseTask = new FetchResponse(prepareQuery());
+        Future<String> fetchResponseFuture = executorService.submit(fetchResponseTask);
+        ProcessResponse processResponseTask = null;
+        try {
+            processResponseTask = new ProcessResponse(fetchResponseFuture.get());
+        } catch (ExecutionException | InterruptedException e) {
+            e.printStackTrace();
+        }
+        assert processResponseTask != null;
+        Future<HashMap> processResponseFuture = executorService.submit(processResponseTask);
+        HashMap processedResponse = null;
+        try {
+            processedResponse = processResponseFuture.get();
+        } catch (ExecutionException | InterruptedException e) {
+            e.printStackTrace();
+        }
+        assert processedResponse != null;
+        // Running UI on a separate thread let's the voice to load much faster
+
+        Speak speakTask = new Speak(processedResponse);
+        speakingAgent = executorService.submit(speakTask);
+
+        final HashMap finalProcessedResponse = processedResponse;
+        executorService.submit(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    activity.playPollySound(speakingAgent.get(), finalUtterance, (boolean) finalProcessedResponse.get("isFinished"));
+                } catch (ExecutionException | InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+
         this.flushReceivedMessage();
+        activity.runOnUiThread(new RunCommandOnUi(processedResponse));
     }
 
 
     void stopSpeaking() {
         if (speakingAgent != null) {
-            speakingAgent.interrupt();
+            speakingAgent.cancel(true);
             speakingAgent = null;
         }
         activity.stopMediaPlayer();
@@ -120,13 +141,24 @@ class ResponseServer {
         return query;
     }
 
-    void respond() {
-        FetchResponse task = new FetchResponse(prepareQuery());
-        Future<String> future = executorService.submit(task);
-        try {
-            executorService.submit(new Thread(new ProcessResponse(future.get())));
-        } catch (InterruptedException | ExecutionException e) {
-            e.printStackTrace();
+    private class RunCommandOnUi implements Runnable {
+        final HashMap command;
+
+        RunCommandOnUi(final HashMap command){
+            this.command = command;
+        }
+        @Override
+        public void run() {
+            if ((int) command.get("responseCode") != 0) {
+                activity.runCommand(
+                        (int) command.get("responseCode"),
+                        (int) command.get("fulfillment"),
+                        String.valueOf(command.get("responseParameter")),
+                        String.valueOf(command.get("nextCommandHintText")),
+                        (boolean) command.get("hasTriedAllCommands"),
+                        (boolean) command.get("commandCompleted")
+                );
+            }
         }
     }
 
@@ -145,6 +177,10 @@ class ResponseServer {
         this.receivedMessage = receivedMessage;
     }
 
+    void setResponseServerAddress(String responseServerAddress) {
+        this.responseServerAddress = responseServerAddress;
+    }
+
     private void flushReceivedMessage() {
         Log.d("Location", "flushReceivedMessage");
         if (this.receivedMessage != null) {
@@ -152,17 +188,29 @@ class ResponseServer {
         }
     }
 
-    private class Speak implements Runnable {
+    private class Speak implements Callable<String> {
         String textToRead;
-        boolean isFinished;
         boolean isSSML;
         boolean isNeural;
         String region;
         String textType;
         String engine;
 
-        Speak(String textToRead, boolean isFinished, boolean isSSML, boolean isNeural, String region) {
-            this.isFinished = isFinished;
+        Speak(HashMap response){
+            if (!String.valueOf(response.get("responseText")).equals("")) {
+                setParams(
+                        String.valueOf(response.get("responseText")),
+                        (boolean) response.get("isSSML"),
+                        (boolean) response.get("isNeural"),
+                        String.valueOf(response.get("region"))
+                );
+                if ((int) response.get("conversationTurn") != 0) {
+                    activity.setConversationTurn((int) response.get("conversationTurn"));
+                }
+            }
+        }
+
+        private void setParams(String textToRead, boolean isSSML, boolean isNeural, String region) {
             this.isSSML = isSSML;
             this.isNeural = isNeural;
             this.region = region;
@@ -182,7 +230,7 @@ class ResponseServer {
         }
 
         @Override
-        public void run() {
+        public String call() {
             try {
                 // Create speech synthesis request.
                 SynthesizeSpeechPresignRequest synthesizeSpeechPresignRequest =
@@ -200,11 +248,11 @@ class ResponseServer {
                 URL presignedSynthesizeSpeechUrl =
                         client.getPresignedSynthesizeSpeechUrl(synthesizeSpeechPresignRequest);
                 Log.i("Polly", "Received speech presigned URL: " + presignedSynthesizeSpeechUrl);
-
-                activity.playPollySound(presignedSynthesizeSpeechUrl.toString(), finalUtterance, isFinished);
+                return presignedSynthesizeSpeechUrl.toString();
             }
             catch (Exception e) {
-                Log.d("Polly Service", "Media player stopped because some objects are null.");
+                Log.d("Polly Service", "Failed");
+                return null;
             }
         }
     }
@@ -248,7 +296,7 @@ class ResponseServer {
         }
     }
 
-    private class ProcessResponse implements Runnable {
+    private class ProcessResponse implements Callable<HashMap> {
         String result;
 
         ProcessResponse(String result){
@@ -256,48 +304,36 @@ class ResponseServer {
         }
 
         @Override
-        public void run() {
+        public HashMap call() {
+            HashMap<String, java.io.Serializable> responseMap = new HashMap<String, java.io.Serializable>();
             try {
                 JSONObject resultJSON = new JSONObject(result);
                 JSONObject response = resultJSON.getJSONObject("response");
-                String responseText = response.getString("message");
-                boolean isFinished = response.getBoolean("is_finished");
-                boolean isSSML = response.getBoolean("is_ssml");
-                boolean isNeural = response.getBoolean("is_neural");
-                String region = response.getString("region");
-                int conversationTurn = 0;
+
+                responseMap.put("responseText", response.getString("message"));
+                responseMap.put("isFinished", response.getBoolean("is_finished"));
+                responseMap.put("isSSML", response.getBoolean("is_ssml"));
+                responseMap.put("isNeural", response.getBoolean("is_neural"));
+                responseMap.put("region", response.getString("region"));
+                responseMap.put("responseCode", response.getInt("response_code"));
+                responseMap.put("fulfillment", response.getInt("fulfillment"));
+
                 try {
-                    conversationTurn = response.getInt("conversation_turn");
+                    responseMap.put("conversationTurn", response.getInt("conversation_turn"));
                 } catch (Exception ignored) {
+                    responseMap.put("conversationTurn", 1);
                 }
-                final int responseCode = response.getInt("response_code");
-                final int fulfillment = response.getInt("fulfillment");
-                if (responseCode != 0) {
-                    final boolean commandCompleted = response.getBoolean("command_completed");
-                    final String responseParameter = response.getString("response_parameter");
-                    final String nextCommandHintText = response.getString("next_command_hint_text");
-                    final boolean hasTriedAllCommands = response.getBoolean("has_tried_all_commands");
-                    // Running UI on a separate thread let's the voice to load much faster
-                    activity.runOnUiThread(new Runnable() { //mText != null &&
-                        @Override
-                        public void run() {
-                            activity.runCommand(responseCode, fulfillment, responseParameter, nextCommandHintText, hasTriedAllCommands, commandCompleted);
-                        }
-                    });
-                }
-                if (!responseText.equals("")) {
-                    speak(responseText, isFinished, isSSML, isNeural, region);
-                    if (conversationTurn != 0) {
-                        SharedPreferences.Editor editor = settings.edit();
-                        editor.putInt("conversationTurn", conversationTurn);
-                        editor.apply();
-                    }
+                if (response.getInt("response_code") != 0) {
+                    responseMap.put("commandCompleted", response.getBoolean("command_completed"));
+                    responseMap.put("responseParameter", response.getString("response_parameter"));
+                    responseMap.put("nextCommandHintText", response.getString("next_command_hint_text"));
+                    responseMap.put("hasTriedAllCommands", response.getBoolean("has_tried_all_commands"));
                 }
             } catch (JSONException e) {
                 e.printStackTrace();
                 Log.d("ServerStat", e.toString());
-                speak("Please check your Internet connection.", false, false, false, "");
             }
+            return responseMap;
         }
     }
 }
