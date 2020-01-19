@@ -47,15 +47,16 @@ public class ExpOneActivity extends SpeechActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-        isTimedResponse = true;
-
         setContentView(R.layout.activity_exp_one);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
             Objects.requireNonNull(getSupportActionBar()).setDisplayHomeAsUpEnabled(true);
         }
+
+        final SharedPreferences settings = getSharedPreferences(USERSETTINGS, 0);
+        uniqueID = settings.getString("uniqueID", "NotSpecified");
+
+        isTimedResponse = true;
 
         microphoneIcon = findViewById(R.id.microphoneButtonExp1);
 

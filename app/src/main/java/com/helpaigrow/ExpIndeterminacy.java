@@ -69,6 +69,7 @@ public class ExpIndeterminacy extends SpeechActivity {
 
         final SharedPreferences settings = getSharedPreferences(USERSETTINGS, 0);
         conversationToken = settings.getString("conversationToken", "");
+        uniqueID = settings.getString("uniqueID", "NotSpecified");
 
         imageView = findViewById(R.id.lightBulb);
         bulbText = findViewById(R.id.bulbText);
@@ -91,7 +92,6 @@ public class ExpIndeterminacy extends SpeechActivity {
         assert audioManager != null;
         audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, (audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC) * 3) / 4, 0);
         audioManager.requestAudioFocus(null, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
-
     }
 
 
